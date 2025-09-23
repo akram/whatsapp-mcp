@@ -26,8 +26,8 @@ FROM alpine:latest
 RUN apk --no-cache add ca-certificates sqlite
 
 # Create app user
-RUN addgroup -g 1001020000 -S appgroup && \
-    adduser -u 1001020000 -S appuser -G appgroup
+RUN addgroup -S appgroup && \
+    adduser -S appuser -G appgroup
 
 # Set working directory
 WORKDIR /app

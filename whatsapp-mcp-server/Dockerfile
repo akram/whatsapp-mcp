@@ -30,8 +30,8 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Create app user
-RUN groupadd -g 1001020000 appgroup && \
-    useradd -u 1001020000 -g appgroup -s /bin/bash appuser
+RUN groupadd appgroup && \
+    useradd -g appgroup -s /bin/bash appuser
 
 # Set working directory
 WORKDIR /app

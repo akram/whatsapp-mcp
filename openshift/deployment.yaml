@@ -60,8 +60,6 @@ spec:
         securityContext:
           allowPrivilegeEscalation: false
           runAsNonRoot: true
-          runAsUser: 1001020000
-          runAsGroup: 1001020000
           capabilities:
             drop:
             - ALL
@@ -117,8 +115,6 @@ spec:
         securityContext:
           allowPrivilegeEscalation: false
           runAsNonRoot: true
-          runAsUser: 1001020000
-          runAsGroup: 1001020000
           capabilities:
             drop:
             - ALL
