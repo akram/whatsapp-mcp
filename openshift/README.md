@@ -162,7 +162,7 @@ oc scale deployment whatsapp-mcp --replicas=2
 
 2. **Pod Startup Issues**
    - Check pod logs: `oc logs <pod-name> -c <container-name>`
-   - Verify PVC is bound: `oc get pvc`
+   - Verify deployment is running: `oc get pods`
 
 3. **Connectivity Issues**
    - Check service endpoints: `oc get endpoints`

@@ -44,16 +44,7 @@ oc delete -f deployment.yaml --ignore-not-found=true
 echo -e "${YELLOW}Removing ConfigMap...${NC}"
 oc delete -f configmap.yaml --ignore-not-found=true
 
-# Remove PVC (with confirmation)
-echo -e "${YELLOW}Removing PersistentVolumeClaim...${NC}"
-read -p "Do you want to delete the persistent volume claims? This will remove all WhatsApp data! (y/N): " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    oc delete -f pvc.yaml --ignore-not-found=true
-    echo -e "${RED}Persistent volume claims deleted. All WhatsApp data has been removed.${NC}"
-else
-    echo -e "${YELLOW}Persistent volume claims preserved.${NC}"
-fi
+# Note: No PVCs to remove - using emptyDir volumes
 
 # Remove ServiceAccount and RBAC
 echo -e "${YELLOW}Removing ServiceAccount and RBAC...${NC}"
