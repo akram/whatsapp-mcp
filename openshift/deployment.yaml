@@ -65,6 +65,9 @@ spec:
         - containerPort: 3000
           name: mcp
           protocol: TCP
+        - containerPort: 3001
+          name: http
+          protocol: TCP
         env:
         - name: BRIDGE_URL
           value: "http://localhost:8080"
@@ -72,6 +75,10 @@ spec:
           value: "3000"
         - name: PYTHONUNBUFFERED
           value: "1"
+        - name: ENABLE_HTTP_SERVER
+          value: "true"
+        - name: HTTP_PORT
+          value: "3001"
         volumeMounts:
         - name: whatsapp-data
           mountPath: /app/store

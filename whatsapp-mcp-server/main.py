@@ -247,5 +247,21 @@ def download_media(message_id: str, chat_jid: str) -> Dict[str, Any]:
         }
 
 if __name__ == "__main__":
-    # Initialize and run the server
+    import os
+    import threading
+    from http_server import run_http_server
+    
+    # Check if we should run HTTP server alongside MCP
+    if os.getenv("ENABLE_HTTP_SERVER", "false").lower() == "true":
+        # Run HTTP server in a separate thread
+        http_port = int(os.getenv("HTTP_PORT", "3000"))
+        http_thread = threading.Thread(
+            target=run_http_server,
+            args=("0.0.0.0", http_port),
+            daemon=True
+        )
+        http_thread.start()
+        print(f"HTTP server with SSE started on port {http_port}")
+    
+    # Initialize and run the MCP server
     mcp.run(transport='stdio')

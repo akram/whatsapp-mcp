@@ -17,6 +17,11 @@ spec:
     port: 3000
     targetPort: 3000
     protocol: TCP
+  # HTTP Server with SSE
+  - name: http-sse
+    port: 3001
+    targetPort: 3001
+    protocol: TCP
   selector:
     app: whatsapp-mcp
 ---
