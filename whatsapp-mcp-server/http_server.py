@@ -40,9 +40,174 @@ async def root():
         "endpoints": {
             "sse": "/sse/events",
             "api": "/api/",
-            "health": "/health"
+            "health": "/health",
+            "tools": "/tools"
         }
     }
+
+@app.get("/tools")
+async def list_tools():
+    """List all available MCP tools with their descriptions and parameters."""
+    tools = [
+        {
+            "name": "search_contacts",
+            "description": "Search WhatsApp contacts by name or phone number",
+            "parameters": {
+                "query": {"type": "string", "description": "Search term to match against contact names or phone numbers"}
+            }
+        },
+        {
+            "name": "list_messages",
+            "description": "Get WhatsApp messages matching specified criteria with optional context",
+            "parameters": {
+                "after": {"type": "string", "description": "Optional ISO-8601 formatted string to only return messages after this date"},
+                "before": {"type": "string", "description": "Optional ISO-8601 formatted string to only return messages before this date"},
+                "sender_phone_number": {"type": "string", "description": "Optional phone number to filter messages by sender"},
+                "chat_jid": {"type": "string", "description": "Optional chat JID to filter messages by chat"},
+                "query": {"type": "string", "description": "Optional search term to filter messages by content"},
+                "limit": {"type": "integer", "description": "Maximum number of messages to return (default 20)"},
+                "page": {"type": "integer", "description": "Page number for pagination (default 0)"},
+                "include_context": {"type": "boolean", "description": "Whether to include messages before and after matches (default True)"},
+                "context_before": {"type": "integer", "description": "Number of messages to include before each match (default 1)"},
+                "context_after": {"type": "integer", "description": "Number of messages to include after each match (default 1)"}
+            }
+        },
+        {
+            "name": "list_chats",
+            "description": "Get WhatsApp chats matching specified criteria",
+            "parameters": {
+                "query": {"type": "string", "description": "Optional search term to filter chats by name or JID"},
+                "limit": {"type": "integer", "description": "Maximum number of chats to return (default 20)"},
+                "page": {"type": "integer", "description": "Page number for pagination (default 0)"},
+                "include_last_message": {"type": "boolean", "description": "Whether to include the last message in each chat (default True)"},
+                "sort_by": {"type": "string", "description": "Field to sort results by, either 'last_active' or 'name' (default 'last_active')"}
+            }
+        },
+        {
+            "name": "get_chat",
+            "description": "Get WhatsApp chat metadata by JID",
+            "parameters": {
+                "chat_jid": {"type": "string", "description": "The JID of the chat to retrieve"},
+                "include_last_message": {"type": "boolean", "description": "Whether to include the last message (default True)"}
+            }
+        },
+        {
+            "name": "get_direct_chat_by_contact",
+            "description": "Get WhatsApp chat metadata by sender phone number",
+            "parameters": {
+                "sender_phone_number": {"type": "string", "description": "The phone number to search for"}
+            }
+        },
+        {
+            "name": "get_contact_chats",
+            "description": "Get all WhatsApp chats involving the contact",
+            "parameters": {
+                "jid": {"type": "string", "description": "The contact's JID to search for"},
+                "limit": {"type": "integer", "description": "Maximum number of chats to return (default 20)"},
+                "page": {"type": "integer", "description": "Page number for pagination (default 0)"}
+            }
+        },
+        {
+            "name": "get_last_interaction",
+            "description": "Get most recent WhatsApp message involving the contact",
+            "parameters": {
+                "jid": {"type": "string", "description": "The JID of the contact to search for"}
+            }
+        },
+        {
+            "name": "get_message_context",
+            "description": "Get context around a specific WhatsApp message",
+            "parameters": {
+                "message_id": {"type": "string", "description": "The ID of the message to get context for"},
+                "before": {"type": "integer", "description": "Number of messages to include before the target message (default 5)"},
+                "after": {"type": "integer", "description": "Number of messages to include after the target message (default 5)"}
+            }
+        },
+        {
+            "name": "send_message",
+            "description": "Send a WhatsApp message to a person or group. For group chats use the JID",
+            "parameters": {
+                "recipient": {"type": "string", "description": "The recipient - either a phone number with country code but no + or other symbols, or a JID (e.g., '123456789@s.whatsapp.net' or a group JID like '123456789@g.us')"},
+                "message": {"type": "string", "description": "The message text to send"}
+            }
+        },
+        {
+            "name": "send_file",
+            "description": "Send a file such as a picture, raw audio, video or document via WhatsApp to the specified recipient. For group messages use the JID",
+            "parameters": {
+                "recipient": {"type": "string", "description": "The recipient - either a phone number with country code but no + or other symbols, or a JID (e.g., '123456789@s.whatsapp.net' or a group JID like '123456789@g.us')"},
+                "media_path": {"type": "string", "description": "The absolute path to the media file to send (image, video, document)"}
+            }
+        },
+        {
+            "name": "send_audio_message",
+            "description": "Send any audio file as a WhatsApp audio message to the specified recipient. For group messages use the JID. If it errors due to ffmpeg not being installed, use send_file instead",
+            "parameters": {
+                "recipient": {"type": "string", "description": "The recipient - either a phone number with country code but no + or other symbols, or a JID (e.g., '123456789@s.whatsapp.net' or a group JID like '123456789@g.us')"},
+                "media_path": {"type": "string", "description": "The absolute path to the audio file to send (will be converted to Opus .ogg if it's not a .ogg file)"}
+            }
+        },
+        {
+            "name": "download_media",
+            "description": "Download media from a WhatsApp message and get the local file path",
+            "parameters": {
+                "message_id": {"type": "string", "description": "The ID of the message containing the media"},
+                "chat_jid": {"type": "string", "description": "The JID of the chat containing the message"}
+            }
+        }
+    ]
+    
+    await broadcast_event("tools_listed", {"count": len(tools)})
+    return {"success": True, "tools": tools}
+
+@app.post("/tools/{tool_name}/execute")
+async def execute_tool(tool_name: str, parameters: dict):
+    """Execute a specific MCP tool with the provided parameters."""
+    try:
+        # Map tool names to their corresponding functions
+        tool_functions = {
+            "search_contacts": whatsapp_search_contacts,
+            "list_messages": whatsapp_list_messages,
+            "list_chats": whatsapp_list_chats,
+            "get_chat": whatsapp_get_chat,
+            "get_direct_chat_by_contact": whatsapp_get_direct_chat_by_contact,
+            "get_contact_chats": whatsapp_get_contact_chats,
+            "get_last_interaction": whatsapp_get_last_interaction,
+            "get_message_context": whatsapp_get_message_context,
+            "send_message": whatsapp_send_message,
+            "send_file": whatsapp_send_file,
+            "send_audio_message": whatsapp_audio_voice_message,
+            "download_media": whatsapp_download_media
+        }
+        
+        if tool_name not in tool_functions:
+            await broadcast_event("tool_error", {
+                "tool_name": tool_name,
+                "error": f"Tool '{tool_name}' not found"
+            })
+            raise HTTPException(status_code=404, detail=f"Tool '{tool_name}' not found")
+        
+        # Execute the tool
+        tool_func = tool_functions[tool_name]
+        result = tool_func(**parameters)
+        
+        # Broadcast the result
+        await broadcast_event("tool_executed", {
+            "tool_name": tool_name,
+            "parameters": parameters,
+            "result": result
+        })
+        
+        return {"success": True, "tool_name": tool_name, "result": result}
+        
+    except Exception as e:
+        logger.error(f"Error executing tool {tool_name}: {e}")
+        await broadcast_event("tool_error", {
+            "tool_name": tool_name,
+            "parameters": parameters,
+            "error": str(e)
+        })
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/health")
 async def health_check():
