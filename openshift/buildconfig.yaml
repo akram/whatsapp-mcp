@@ -1,0 +1,79 @@
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: whatsapp-bridge
+  labels:
+    app: whatsapp-bridge
+spec:
+  source:
+    type: Git
+    git:
+      uri: https://github.com/akram/whatsapp-mcp.git
+      ref: main
+    contextDir: whatsapp-bridge
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: Dockerfile
+  output:
+    to:
+      kind: ImageStreamTag
+      name: whatsapp-bridge:latest
+  triggers:
+  - type: ConfigChange
+  - type: ImageChange
+    imageChange: {}
+  - type: GitHub
+    github:
+      secret: github-webhook-secret
+  runPolicy: Serial
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: whatsapp-mcp-server
+  labels:
+    app: whatsapp-mcp-server
+spec:
+  source:
+    type: Git
+    git:
+      uri: https://github.com/akram/whatsapp-mcp.git
+      ref: main
+    contextDir: whatsapp-mcp-server
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: Dockerfile
+  output:
+    to:
+      kind: ImageStreamTag
+      name: whatsapp-mcp-server:latest
+  triggers:
+  - type: ConfigChange
+  - type: ImageChange
+    imageChange: {}
+  - type: GitHub
+    github:
+      secret: github-webhook-secret
+  runPolicy: Serial
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: whatsapp-bridge
+  labels:
+    app: whatsapp-bridge
+spec:
+  lookupPolicy:
+    local: false
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: whatsapp-mcp-server
+  labels:
+    app: whatsapp-mcp-server
+spec:
+  lookupPolicy:
+    local: false

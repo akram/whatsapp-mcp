@@ -1,0 +1,38 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: whatsapp-mcp-route
+  labels:
+    app: whatsapp-mcp
+spec:
+  host: whatsapp-mcp.apps.example.com  # Replace with your OpenShift cluster domain
+  port:
+    targetPort: mcp-http
+  to:
+    kind: Service
+    name: whatsapp-mcp-service
+    weight: 100
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None
+---
+# Route for WhatsApp Bridge (if direct access is needed)
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: whatsapp-bridge-route
+  labels:
+    app: whatsapp-bridge
+spec:
+  host: whatsapp-bridge.apps.example.com  # Replace with your OpenShift cluster domain
+  port:
+    targetPort: bridge-http
+  to:
+    kind: Service
+    name: whatsapp-bridge-service
+    weight: 100
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None

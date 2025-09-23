@@ -1,0 +1,36 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: whatsapp-mcp
+
+resources:
+  - webhook-secret.yaml
+  - buildconfig.yaml
+  - configmap.yaml
+  - pvc.yaml
+  - deployment.yaml
+  - service.yaml
+  - route.yaml
+
+commonLabels:
+  app.kubernetes.io/name: whatsapp-mcp
+  app.kubernetes.io/version: "1.0.0"
+  app.kubernetes.io/component: mcp-server
+  app.kubernetes.io/part-of: whatsapp-mcp
+
+images:
+  - name: whatsapp-bridge
+    newTag: latest
+  - name: whatsapp-mcp-server
+    newTag: latest
+
+patchesStrategicMerge:
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: whatsapp-mcp
+    spec:
+      template:
+        spec:
+          serviceAccountName: whatsapp-mcp

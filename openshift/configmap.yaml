@@ -1,0 +1,85 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: whatsapp-mcp-config
+  labels:
+    app: whatsapp-mcp
+data:
+  # WhatsApp Bridge Configuration
+  bridge-config.json: |
+    {
+      "port": 8080,
+      "store_path": "/app/store",
+      "log_level": "INFO",
+      "max_connections": 100,
+      "timeout": 30
+    }
+  
+  # MCP Server Configuration
+  mcp-config.json: |
+    {
+      "bridge_url": "http://localhost:8080",
+      "port": 3000,
+      "log_level": "INFO",
+      "max_retries": 3,
+      "retry_delay": 5
+    }
+  
+  # Application Configuration
+  app-config.json: |
+    {
+      "whatsapp": {
+        "session_timeout": 3600,
+        "qr_timeout": 180,
+        "max_message_size": 1048576,
+        "media_download_timeout": 300
+      },
+      "database": {
+        "max_connections": 10,
+        "connection_timeout": 30,
+        "query_timeout": 60
+      },
+      "security": {
+        "enable_cors": true,
+        "allowed_origins": ["*"],
+        "rate_limit": {
+          "enabled": true,
+          "requests_per_minute": 60
+        }
+      }
+    }
+  
+  # Logging Configuration
+  logging.yaml: |
+    version: 1
+    disable_existing_loggers: false
+    formatters:
+      standard:
+        format: '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
+      detailed:
+        format: '%(asctime)s [%(levelname)s] %(name)s:%(lineno)d: %(message)s'
+    handlers:
+      console:
+        class: logging.StreamHandler
+        level: INFO
+        formatter: standard
+        stream: ext://sys.stdout
+      file:
+        class: logging.handlers.RotatingFileHandler
+        level: DEBUG
+        formatter: detailed
+        filename: /app/logs/whatsapp-mcp.log
+        maxBytes: 10485760
+        backupCount: 5
+    loggers:
+      whatsapp:
+        level: INFO
+        handlers: [console, file]
+        propagate: false
+      mcp:
+        level: INFO
+        handlers: [console, file]
+        propagate: false
+    root:
+      level: INFO
+      handlers: [console]
