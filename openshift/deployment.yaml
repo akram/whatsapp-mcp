@@ -43,19 +43,11 @@ spec:
             cpu: "500m"
         livenessProbe:
           httpGet:
-            path: /api/send
+            path: /api/health
             port: 8080
           initialDelaySeconds: 30
           periodSeconds: 30
           timeoutSeconds: 10
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /api/send
-            port: 8080
-          initialDelaySeconds: 10
-          periodSeconds: 10
-          timeoutSeconds: 5
           failureThreshold: 3
         securityContext:
           allowPrivilegeEscalation: false
@@ -115,6 +107,9 @@ spec:
         securityContext:
           allowPrivilegeEscalation: false
           runAsNonRoot: true
+          runAsUser: 1001020000
+          runAsGroup: 1001020000
+          fsGroup: 1001020000
           capabilities:
             drop:
             - ALL
