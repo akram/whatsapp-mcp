@@ -10,7 +10,6 @@ spec:
   resources:
     requests:
       storage: 10Gi
-  storageClassName: gp2  # Adjust based on your OpenShift cluster's storage class
 ---
 # Optional: Create a separate PVC for logs if needed
 apiVersion: v1
@@ -25,4 +24,3 @@ spec:
   resources:
     requests:
       storage: 5Gi
-  storageClassName: gp2  # Adjust based on your OpenShift cluster's storage class
