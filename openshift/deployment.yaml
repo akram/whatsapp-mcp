@@ -18,7 +18,7 @@ spec:
       containers:
       # WhatsApp Bridge Container (Go application)
       - name: whatsapp-bridge
-        image: whatsapp-bridge:latest
+        image: image-registry.openshift-image-registry.svc:5000/whatsapp-mcp/whatsapp-bridge:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
@@ -67,7 +67,7 @@ spec:
       
       # MCP Server Container (Python application)
       - name: whatsapp-mcp-server
-        image: whatsapp-mcp-server:latest
+        image: image-registry.openshift-image-registry.svc:5000/whatsapp-mcp/whatsapp-mcp-server:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 3000
