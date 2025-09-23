@@ -122,7 +122,8 @@ spec:
       
       volumes:
       - name: whatsapp-data
-        emptyDir: {}
+        persistentVolumeClaim:
+          claimName: whatsapp-data-pvc
       - name: config
         configMap:
           name: whatsapp-mcp-config

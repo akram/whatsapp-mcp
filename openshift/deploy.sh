@@ -79,7 +79,9 @@ oc apply -f buildconfig.yaml
 echo -e "${YELLOW}Applying ConfigMap...${NC}"
 oc apply -f configmap.yaml
 
-# Note: Using emptyDir volumes instead of PVCs for simplicity
+# Apply PVC
+echo -e "${YELLOW}Applying PersistentVolumeClaim...${NC}"
+oc apply -f pvc.yaml
 
 # Apply deployment (images will be pulled from ImageStreams)
 echo -e "${YELLOW}Applying deployment...${NC}"
