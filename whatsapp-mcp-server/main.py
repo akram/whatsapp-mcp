@@ -57,8 +57,8 @@ def list_messages(
     limit: int = 20,
     page: int = 0,
     include_context: bool = True,
-    context_before: int = 1,
-    context_after: int = 1
+    context_before: Optional[int] = 1,
+    context_after: Optional[int] = 1
 ) -> List[Dict[str, Any]]:
     """Get WhatsApp messages matching specified criteria with optional context.
     
@@ -74,6 +74,22 @@ def list_messages(
         context_before: Number of messages to include before each match (default 1)
         context_after: Number of messages to include after each match (default 1)
     """
+    # Handle string "None" values from MCP client
+    if isinstance(after, str) and after.lower() == "none":
+        after = None
+    if isinstance(before, str) and before.lower() == "none":
+        before = None
+    if isinstance(sender_phone_number, str) and sender_phone_number.lower() == "none":
+        sender_phone_number = None
+    if isinstance(chat_jid, str) and chat_jid.lower() == "none":
+        chat_jid = None
+    if isinstance(query, str) and query.lower() == "none":
+        query = None
+    if isinstance(context_before, str) and context_before.lower() == "none":
+        context_before = 1
+    if isinstance(context_after, str) and context_after.lower() == "none":
+        context_after = 1
+    
     messages = whatsapp_list_messages(
         after=after,
         before=before,
@@ -125,6 +141,10 @@ def list_chats(
         include_last_message: Whether to include the last message in each chat (default True)
         sort_by: Field to sort results by, either "last_active" or "name" (default "last_active")
     """
+    # Handle string "None" values from MCP client
+    if isinstance(query, str) and query.lower() == "none":
+        query = None
+    
     chats = whatsapp_list_chats(
         query=query,
         limit=limit,
