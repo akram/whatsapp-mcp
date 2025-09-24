@@ -5,6 +5,7 @@ from starlette.requests import Request
 import asyncio
 import json
 import logging
+import os
 from datetime import datetime
 from whatsapp import (
     search_contacts as whatsapp_search_contacts,
@@ -185,12 +186,21 @@ async def create_llamastack_client():
         # Import LlamaStack client
         from llamastack import LlamaStackClient
         
+        # Get LlamaStack configuration from environment variables
+        llamastack_url = os.getenv("LLAMASTACK_URL", "http://localhost:3000/sse")
+        llamastack_model = os.getenv("LLAMASTACK_MODEL", "claude-3-5-sonnet-20241022")
+        llamastack_temperature = float(os.getenv("LLAMASTACK_TEMPERATURE", "0.7"))
+        llamastack_max_tokens = int(os.getenv("LLAMASTACK_MAX_TOKENS", "200"))
+        
+        logger.info(f"🔗 Connecting to LlamaStack at: {llamastack_url}")
+        logger.info(f"🤖 Using model: {llamastack_model}")
+        
         # Create client with MCP server configuration
         client = LlamaStackClient(
-            mcp_server_url="http://localhost:3000/sse",
-            model="claude-3-5-sonnet-20241022",  # or your preferred model
-            temperature=0.7,
-            max_tokens=200
+            mcp_server_url=llamastack_url,
+            model=llamastack_model,
+            temperature=llamastack_temperature,
+            max_tokens=llamastack_max_tokens
         )
         
         # Initialize the client
