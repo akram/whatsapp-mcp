@@ -248,20 +248,20 @@ def download_media(message_id: str, chat_jid: str) -> Dict[str, Any]:
 
 if __name__ == "__main__":
     import os
-    import threading
-    from http_server import run_http_server
     
-    # Check if we should run HTTP server alongside MCP
-    if os.getenv("ENABLE_HTTP_SERVER", "false").lower() == "true":
-        # Run HTTP server in a separate thread
-        http_port = int(os.getenv("HTTP_PORT", "3000"))
-        http_thread = threading.Thread(
-            target=run_http_server,
-            args=("0.0.0.0", http_port),
-            daemon=True
-        )
-        http_thread.start()
-        print(f"HTTP server with SSE started on port {http_port}")
+    # Get configuration from environment variables
+    host = os.getenv("MCP_HOST", "0.0.0.0")
+    port = int(os.getenv("MCP_PORT", "3000"))
+    transport = os.getenv("MCP_TRANSPORT", "sse")  # Default to SSE
     
-    # Initialize and run the MCP server
-    mcp.run(transport='stdio')
+    print(f"🚀 Starting WhatsApp MCP server...")
+    print(f"   Transport: {transport}")
+    print(f"   Host: {host}")
+    print(f"   Port: {port}")
+    
+    if transport == "sse":
+        print(f"   SSE Endpoint: http://{host}:{port}/sse")
+        print(f"   This will properly implement MCP protocol over SSE")
+    
+    # Initialize and run the MCP server with SSE transport
+    mcp.run(transport=transport, host=host, port=port)

@@ -51,12 +51,17 @@ USER appuser
 # Activate virtual environment
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Expose port (MCP typically uses stdio, but we'll expose for health checks)
+# Set environment variables for SSE transport
+ENV MCP_TRANSPORT=sse
+ENV MCP_HOST=0.0.0.0
+ENV MCP_PORT=3000
+
+# Expose port for SSE transport
 EXPOSE 3000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import sys; sys.exit(0)" || exit 1
+    CMD curl -f http://localhost:3000/sse || exit 1
 
-# Run the MCP server
+# Run the MCP server with SSE transport
 CMD ["python", "main.py"]
