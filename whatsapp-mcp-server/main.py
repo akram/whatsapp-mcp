@@ -264,4 +264,6 @@ if __name__ == "__main__":
         print(f"   This will properly implement MCP protocol over SSE")
     
     # Initialize and run the MCP server with SSE transport
-    mcp.run(transport=transport, host=host, port=port)
+    mcp.settings.host = host
+    mcp.settings.port = port    
+    mcp.run(transport=transport)
