@@ -212,7 +212,9 @@ async def create_llamastack_client():
         # Initialize the client
         await client.initialize()
         
-        logger.info("✅ LlamaStack client created and initialized")
+        logger.info("✅ LlamaStack client created and initialized successfully")
+        logger.info(f"🔗 Connected to LlamaStack service at: {llamastack_base_url}")
+        logger.info(f"🤖 Using AI model: {llamastack_model}")
         return client
         
     except ImportError:
