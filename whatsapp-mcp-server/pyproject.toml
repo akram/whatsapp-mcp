@@ -5,11 +5,9 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "httpx>=0.28.1",
-    "mcp[cli]>=1.6.0",
-    "requests>=2.32.3",
-    "fastapi>=0.115.0",
-    "uvicorn>=0.34.0",
-    "sse-starlette>=2.2.1",
-    "python-multipart>=0.0.6",
+    "fastmcp",
+    "fastapi",
+    "uvicorn",
+    "sse-starlette",
+    "python-multipart",
 ]

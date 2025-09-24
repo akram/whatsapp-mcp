@@ -21,9 +21,7 @@ mcp = FastMCP("whatsapp")
 
 @mcp.tool(
     name="search_contacts",
-    description="Search WhatsApp contacts by name or phone number.",
-    tags={"contacts", "search"},
-    meta={"version": "1.0", "category": "contacts"}
+    description="Search WhatsApp contacts by name or phone number."
 )
 def search_contacts(query: str) -> List[Dict[str, Any]]:
     """Search WhatsApp contacts by name or phone number.
@@ -37,8 +35,7 @@ def search_contacts(query: str) -> List[Dict[str, Any]]:
 @mcp.tool(
     name="list_messages",
     description="Get WhatsApp messages matching specified criteria with optional context.",
-    tags={"messages", "search", "context"},
-    meta={"version": "1.0", "category": "messages"}
+    
 )
 def list_messages(
     after: Optional[str] = None,
@@ -83,8 +80,7 @@ def list_messages(
 @mcp.tool(
     name="list_chats",
     description="Get WhatsApp chats matching specified criteria.",
-    tags={"chats", "list"},
-    meta={"version": "1.0", "category": "chats"}
+    
 )
 def list_chats(
     query: Optional[str] = None,
@@ -114,8 +110,7 @@ def list_chats(
 @mcp.tool(
     name="get_chat",
     description="Get WhatsApp chat metadata by JID.",
-    tags={"chats", "metadata"},
-    meta={"version": "1.0", "category": "chats"}
+    
 )
 def get_chat(chat_jid: str, include_last_message: bool = True) -> Dict[str, Any]:
     """Get WhatsApp chat metadata by JID.
@@ -130,8 +125,7 @@ def get_chat(chat_jid: str, include_last_message: bool = True) -> Dict[str, Any]
 @mcp.tool(
     name="get_direct_chat_by_contact",
     description="Get WhatsApp chat metadata by sender phone number.",
-    tags={"chats", "contacts"},
-    meta={"version": "1.0", "category": "chats"}
+    
 )
 def get_direct_chat_by_contact(sender_phone_number: str) -> Dict[str, Any]:
     """Get WhatsApp chat metadata by sender phone number.
@@ -145,8 +139,7 @@ def get_direct_chat_by_contact(sender_phone_number: str) -> Dict[str, Any]:
 @mcp.tool(
     name="get_contact_chats",
     description="Get all WhatsApp chats involving the contact.",
-    tags={"chats", "contacts"},
-    meta={"version": "1.0", "category": "chats"}
+    
 )
 def get_contact_chats(jid: str, limit: int = 20, page: int = 0) -> List[Dict[str, Any]]:
     """Get all WhatsApp chats involving the contact.
@@ -162,8 +155,7 @@ def get_contact_chats(jid: str, limit: int = 20, page: int = 0) -> List[Dict[str
 @mcp.tool(
     name="get_last_interaction",
     description="Get most recent WhatsApp message involving the contact.",
-    tags={"messages", "contacts"},
-    meta={"version": "1.0", "category": "messages"}
+    
 )
 def get_last_interaction(jid: str) -> str:
     """Get most recent WhatsApp message involving the contact.
@@ -177,8 +169,7 @@ def get_last_interaction(jid: str) -> str:
 @mcp.tool(
     name="get_message_context",
     description="Get context around a specific WhatsApp message.",
-    tags={"messages", "context"},
-    meta={"version": "1.0", "category": "messages"}
+    
 )
 def get_message_context(
     message_id: str,
@@ -198,8 +189,7 @@ def get_message_context(
 @mcp.tool(
     name="send_message",
     description="Send a WhatsApp message to a person or group.",
-    tags={"messages", "send"},
-    meta={"version": "1.0", "category": "messaging"}
+    
 )
 def send_message(
     recipient: str,
@@ -232,8 +222,7 @@ def send_message(
 @mcp.tool(
     name="send_file",
     description="Send a file such as a picture, raw audio, video or document via WhatsApp.",
-    tags={"files", "send", "media"},
-    meta={"version": "1.0", "category": "messaging"}
+    
 )
 def send_file(recipient: str, media_path: str) -> Dict[str, Any]:
     """Send a file such as a picture, raw audio, video or document via WhatsApp to the specified recipient. For group messages use the JID.
@@ -257,8 +246,7 @@ def send_file(recipient: str, media_path: str) -> Dict[str, Any]:
 @mcp.tool(
     name="send_audio_message",
     description="Send any audio file as a WhatsApp audio message.",
-    tags={"audio", "send", "media"},
-    meta={"version": "1.0", "category": "messaging"}
+    
 )
 def send_audio_message(recipient: str, media_path: str) -> Dict[str, Any]:
     """Send any audio file as a WhatsApp audio message to the specified recipient. For group messages use the JID. If it errors due to ffmpeg not being installed, use send_file instead.
@@ -280,8 +268,7 @@ def send_audio_message(recipient: str, media_path: str) -> Dict[str, Any]:
 @mcp.tool(
     name="download_media",
     description="Download media from a WhatsApp message and get the local file path.",
-    tags={"media", "download"},
-    meta={"version": "1.0", "category": "media"}
+    
 )
 def download_media(message_id: str, chat_jid: str) -> Dict[str, Any]:
     """Download media from a WhatsApp message and get the local file path.
@@ -316,28 +303,115 @@ async def health_check(request):
 @mcp.custom_route("/tools", methods=["GET"])
 async def list_tools(request):
     """List all available MCP tools with their descriptions and parameters."""
-    tools = []
-    for tool_name, tool_func in mcp.tools.items():
-        tool_info = {
-            "name": tool_name,
-            "description": tool_func.__doc__ or "No description available"
+    # For now, return a simple list of our WhatsApp tools
+    tools = [
+        {
+            "name": "search_contacts",
+            "description": "Search WhatsApp contacts by name or phone number.",
+            "parameters": {
+                "query": {"type": "string", "description": "Search term to match against contact names or phone numbers"}
+            }
+        },
+        {
+            "name": "list_messages", 
+            "description": "Get WhatsApp messages matching specified criteria with optional context.",
+            "parameters": {
+                "after": {"type": "string", "description": "Optional ISO-8601 formatted string to only return messages after this date"},
+                "before": {"type": "string", "description": "Optional ISO-8601 formatted string to only return messages before this date"},
+                "sender_phone_number": {"type": "string", "description": "Optional phone number to filter messages by sender"},
+                "chat_jid": {"type": "string", "description": "Optional chat JID to filter messages by chat"},
+                "query": {"type": "string", "description": "Optional search term to filter messages by content"},
+                "limit": {"type": "integer", "description": "Maximum number of messages to return (default 20)"},
+                "page": {"type": "integer", "description": "Page number for pagination (default 0)"},
+                "include_context": {"type": "boolean", "description": "Whether to include messages before and after matches (default True)"},
+                "context_before": {"type": "integer", "description": "Number of messages to include before each match (default 1)"},
+                "context_after": {"type": "integer", "description": "Number of messages to include after each match (default 1)"}
+            }
+        },
+        {
+            "name": "list_chats",
+            "description": "Get WhatsApp chats matching specified criteria.",
+            "parameters": {
+                "query": {"type": "string", "description": "Optional search term to filter chats by name or JID"},
+                "limit": {"type": "integer", "description": "Maximum number of chats to return (default 20)"},
+                "page": {"type": "integer", "description": "Page number for pagination (default 0)"},
+                "include_last_message": {"type": "boolean", "description": "Whether to include the last message in each chat (default True)"},
+                "sort_by": {"type": "string", "description": "Field to sort results by, either 'last_active' or 'name' (default 'last_active')"}
+            }
+        },
+        {
+            "name": "get_chat",
+            "description": "Get WhatsApp chat metadata by JID.",
+            "parameters": {
+                "chat_jid": {"type": "string", "description": "The JID of the chat to retrieve"},
+                "include_last_message": {"type": "boolean", "description": "Whether to include the last message (default True)"}
+            }
+        },
+        {
+            "name": "get_direct_chat_by_contact",
+            "description": "Get WhatsApp chat metadata by sender phone number.",
+            "parameters": {
+                "sender_phone_number": {"type": "string", "description": "The phone number to search for"}
+            }
+        },
+        {
+            "name": "get_contact_chats",
+            "description": "Get all WhatsApp chats involving the contact.",
+            "parameters": {
+                "jid": {"type": "string", "description": "The contact's JID to search for"},
+                "limit": {"type": "integer", "description": "Maximum number of chats to return (default 20)"},
+                "page": {"type": "integer", "description": "Page number for pagination (default 0)"}
+            }
+        },
+        {
+            "name": "get_last_interaction",
+            "description": "Get most recent WhatsApp message involving the contact.",
+            "parameters": {
+                "jid": {"type": "string", "description": "The JID of the contact to search for"}
+            }
+        },
+        {
+            "name": "get_message_context",
+            "description": "Get context around a specific WhatsApp message.",
+            "parameters": {
+                "message_id": {"type": "string", "description": "The ID of the message to get context for"},
+                "before": {"type": "integer", "description": "Number of messages to include before the target message (default 5)"},
+                "after": {"type": "integer", "description": "Number of messages to include after the target message (default 5)"}
+            }
+        },
+        {
+            "name": "send_message",
+            "description": "Send a WhatsApp message to a person or group.",
+            "parameters": {
+                "recipient": {"type": "string", "description": "The recipient - either a phone number with country code but no + or other symbols, or a JID"},
+                "message": {"type": "string", "description": "The message text to send"}
+            }
+        },
+        {
+            "name": "send_file",
+            "description": "Send a file such as a picture, raw audio, video or document via WhatsApp.",
+            "parameters": {
+                "recipient": {"type": "string", "description": "The recipient - either a phone number with country code but no + or other symbols, or a JID"},
+                "media_path": {"type": "string", "description": "The absolute path to the media file to send (image, video, document)"}
+            }
+        },
+        {
+            "name": "send_audio_message",
+            "description": "Send any audio file as a WhatsApp audio message.",
+            "parameters": {
+                "recipient": {"type": "string", "description": "The recipient - either a phone number with country code but no + or other symbols, or a JID"},
+                "media_path": {"type": "string", "description": "The absolute path to the audio file to send (will be converted to Opus .ogg if it's not a .ogg file)"}
+            }
+        },
+        {
+            "name": "download_media",
+            "description": "Download media from a WhatsApp message and get the local file path.",
+            "parameters": {
+                "message_id": {"type": "string", "description": "The ID of the message containing the media"},
+                "chat_jid": {"type": "string", "description": "The JID of the chat containing the message"}
+            }
         }
-        
-        # Try to get parameter information from function signature
-        import inspect
-        sig = inspect.signature(tool_func)
-        if sig.parameters:
-            tool_info["parameters"] = {}
-            for param_name, param in sig.parameters.items():
-                param_info = {
-                    "type": str(param.annotation) if param.annotation != inspect.Parameter.empty else "string",
-                    "description": f"Parameter: {param_name}"
-                }
-                if param.default != inspect.Parameter.empty:
-                    param_info["default"] = param.default
-                tool_info["parameters"][param_name] = param_info
-        
-        tools.append(tool_info)
+    ]
     
     return JSONResponse({"tools": tools})
 
@@ -384,4 +458,6 @@ if __name__ == "__main__":
         print(f"   This provides both MCP protocol and HTTP API endpoints")
     
     # Initialize and run the MCP server
-    mcp.run(transport=transport, host=host, port=port)
+    mcp.settings.host = host
+    mcp.settings.port = port    
+    mcp.run(transport=transport)
