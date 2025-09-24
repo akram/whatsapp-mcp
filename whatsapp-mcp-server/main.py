@@ -187,18 +187,23 @@ async def create_llamastack_client():
         from llamastack import LlamaStackClient
         
         # Get LlamaStack configuration from environment variables
-        # Default URLs from your notebooks (Teti love message setup)
-        llamastack_url = os.getenv("LLAMASTACK_URL", "https://whatsapp-mcp-route-whatsapp-mcp.apps.rosa.akram.a1ey.p3.openshiftapps.com/sse")
+        # LLAMASTACK_BASE_URL: The LlamaStack service URL (external)
+        # WHATSAPP_MCP_SSE_URL: The MCP server endpoint (can be localhost)
+        llamastack_base_url = os.getenv("LLAMASTACK_BASE_URL", "http://ragathon-team-3-ragathon-team-3.apps.llama-rag-pool-b84hp.aws.rh-ods.com/")
+        whatsapp_mcp_sse_url = os.getenv("WHATSAPP_MCP_SSE_URL", "https://whatsapp-mcp-route-whatsapp-mcp.apps.rosa.akram.a1ey.p3.openshiftapps.com/sse")
         llamastack_model = os.getenv("LLAMASTACK_MODEL", "claude-3-5-sonnet-20241022")
         llamastack_temperature = float(os.getenv("LLAMASTACK_TEMPERATURE", "0.7"))
         llamastack_max_tokens = int(os.getenv("LLAMASTACK_MAX_TOKENS", "200"))
         
-        logger.info(f"🔗 Connecting to LlamaStack at: {llamastack_url}")
+        logger.info(f"🔗 LlamaStack Base URL: {llamastack_base_url}")
+        logger.info(f"🔗 WhatsApp MCP SSE URL: {whatsapp_mcp_sse_url}")
         logger.info(f"🤖 Using model: {llamastack_model}")
         
-        # Create client with MCP server configuration
+        # Create client with LlamaStack base URL
+        # LlamaStack client connects to the LlamaStack service (llamastack_base_url)
+        # The MCP server provides WhatsApp tools to LlamaStack via the base URL
         client = LlamaStackClient(
-            mcp_server_url=llamastack_url,
+            base_url=llamastack_base_url,
             model=llamastack_model,
             temperature=llamastack_temperature,
             max_tokens=llamastack_max_tokens

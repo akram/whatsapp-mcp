@@ -43,8 +43,10 @@ def main():
     print("=" * 50)
     
     # Check current configuration
-    current_url = os.getenv("LLAMASTACK_URL", "https://whatsapp-mcp-route-whatsapp-mcp.apps.rosa.akram.a1ey.p3.openshiftapps.com/sse")
-    print(f"Current LLAMASTACK_URL: {current_url}")
+    llamastack_base_url = os.getenv("LLAMASTACK_BASE_URL", "http://ragathon-team-3-ragathon-team-3.apps.llama-rag-pool-b84hp.aws.rh-ods.com/")
+    whatsapp_mcp_sse_url = os.getenv("WHATSAPP_MCP_SSE_URL", "https://whatsapp-mcp-route-whatsapp-mcp.apps.rosa.akram.a1ey.p3.openshiftapps.com/sse")
+    print(f"Current LLAMASTACK_BASE_URL: {llamastack_base_url}")
+    print(f"Current WHATSAPP_MCP_SSE_URL: {whatsapp_mcp_sse_url}")
     
     # Test MCP server
     print("\n📡 Testing MCP server...")
@@ -59,20 +61,23 @@ def main():
     # Provide configuration options
     print("\n📋 Configuration Options:")
     print("")
-    print("1. **Default Configuration (OpenShift Deployment - RECOMMENDED)**")
-    print("   export LLAMASTACK_URL='https://whatsapp-mcp-route-whatsapp-mcp.apps.rosa.akram.a1ey.p3.openshiftapps.com/sse'")
-    print("   # Uses the OpenShift deployment from your Teti notebook")
+    print("1. **Default Configuration (Ragathon Team 3 - RECOMMENDED)**")
+    print("   export LLAMASTACK_BASE_URL='http://ragathon-team-3-ragathon-team-3.apps.llama-rag-pool-b84hp.aws.rh-ods.com/'")
+    print("   export WHATSAPP_MCP_SSE_URL='https://whatsapp-mcp-route-whatsapp-mcp.apps.rosa.akram.a1ey.p3.openshiftapps.com/sse'")
+    print("   # Uses the ragathon-team-3 deployment with OpenShift MCP server")
     print("")
     print("2. **External LlamaStack Service**")
-    print("   export LLAMASTACK_URL='http://llamastack.example.com:8080/sse'")
+    print("   export LLAMASTACK_BASE_URL='http://llamastack.example.com:8080/'")
+    print("   export WHATSAPP_MCP_SSE_URL='http://localhost:3000/sse'")
     print("   # Point to a separate LlamaStack service")
     print("")
     print("3. **Local LlamaStack Service**")
-    print("   export LLAMASTACK_URL='http://localhost:8080/sse'")
-    print("   # If LlamaStack is running on a different port")
+    print("   export LLAMASTACK_BASE_URL='http://localhost:8080/'")
+    print("   export WHATSAPP_MCP_SSE_URL='http://localhost:3000/sse'")
+    print("   # If LlamaStack is running locally")
     print("")
     print("4. **Disable Auto-Reply**")
-    print("   export LLAMASTACK_URL=''")
+    print("   export LLAMASTACK_BASE_URL=''")
     print("   # Empty URL disables auto-reply functionality")
     print("")
     

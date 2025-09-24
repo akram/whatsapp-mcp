@@ -7,8 +7,11 @@ Configure the LlamaStack auto-reply system using these environment variables:
 ### Required Configuration
 
 ```bash
-# LlamaStack service URL (default: OpenShift deployment from Teti notebook)
-export LLAMASTACK_URL="https://whatsapp-mcp-route-whatsapp-mcp.apps.rosa.akram.a1ey.p3.openshiftapps.com/sse"
+# LlamaStack service URL (external LlamaStack deployment)
+export LLAMASTACK_BASE_URL="http://ragathon-team-3-ragathon-team-3.apps.llama-rag-pool-b84hp.aws.rh-ods.com/"
+
+# WhatsApp MCP server endpoint (where MCP server is running)
+export WHATSAPP_MCP_SSE_URL="https://whatsapp-mcp-route-whatsapp-mcp.apps.rosa.akram.a1ey.p3.openshiftapps.com/sse"
 
 # AI model to use for responses
 export LLAMASTACK_MODEL="claude-3-5-sonnet-20241022"
@@ -35,9 +38,11 @@ export MESSAGES_DB_PATH="/path/to/messages.db"
 
 ## Usage Examples
 
-### Basic Setup (Using Default OpenShift Deployment)
+### Basic Setup (Using Default Configuration)
 ```bash
-# Default configuration uses OpenShift deployment from Teti notebook
+# Default configuration:
+# - LLAMASTACK_BASE_URL: ragathon-team-3 deployment
+# - WHATSAPP_MCP_SSE_URL: OpenShift route
 # No environment variables needed - uses defaults
 
 # Start MCP server
@@ -48,7 +53,8 @@ python main.py
 ### Custom LlamaStack Service
 ```bash
 # If LlamaStack is running on a different host/port
-export LLAMASTACK_URL="http://llamastack.example.com:8080/sse"
+export LLAMASTACK_BASE_URL="http://llamastack.example.com:8080/"
+export WHATSAPP_MCP_SSE_URL="https://whatsapp-mcp-route-whatsapp-mcp.apps.rosa.akram.a1ey.p3.openshiftapps.com/sse"
 export LLAMASTACK_MODEL="gpt-4"
 export LLAMASTACK_TEMPERATURE="0.5"
 
@@ -60,7 +66,8 @@ python main.py
 ```bash
 # In docker-compose.yml or Dockerfile
 environment:
-  - LLAMASTACK_URL=http://llamastack-service:3000/sse
+  - LLAMASTACK_BASE_URL=http://llamastack-service:3000/
+  - WHATSAPP_MCP_SSE_URL=https://whatsapp-mcp-route-whatsapp-mcp.apps.rosa.akram.a1ey.p3.openshiftapps.com/sse
   - LLAMASTACK_MODEL=claude-3-5-sonnet-20241022
   - LLAMASTACK_TEMPERATURE=0.7
   - LLAMASTACK_MAX_TOKENS=200
@@ -68,10 +75,11 @@ environment:
 
 ## Configuration Notes
 
-1. **LLAMASTACK_URL**: This should point to where LlamaStack is running, not the MCP server itself
-2. **LLAMASTACK_MODEL**: Choose the AI model based on your needs and API access
-3. **LLAMASTACK_TEMPERATURE**: Lower values (0.1-0.3) for consistent responses, higher values (0.7-1.0) for creative responses
-4. **LLAMASTACK_MAX_TOKENS**: Adjust based on desired response length
+1. **LLAMASTACK_BASE_URL**: This should point to where LlamaStack is running
+2. **WHATSAPP_MCP_SSE_URL**: This should point to your MCP server's SSE endpoint
+3. **LLAMASTACK_MODEL**: Choose the AI model based on your needs and API access
+4. **LLAMASTACK_TEMPERATURE**: Lower values (0.1-0.3) for consistent responses, higher values (0.7-1.0) for creative responses
+5. **LLAMASTACK_MAX_TOKENS**: Adjust based on desired response length
 
 ## Troubleshooting
 
@@ -90,7 +98,8 @@ Enable debug logging to see configuration values:
 export PYTHONPATH=/path/to/whatsapp-mcp-server
 python -c "
 import os
-print('LLAMASTACK_URL:', os.getenv('LLAMASTACK_URL', 'http://localhost:3000/sse'))
+print('LLAMASTACK_BASE_URL:', os.getenv('LLAMASTACK_BASE_URL', 'http://ragathon-team-3-ragathon-team-3.apps.llama-rag-pool-b84hp.aws.rh-ods.com/'))
+print('WHATSAPP_MCP_SSE_URL:', os.getenv('WHATSAPP_MCP_SSE_URL', 'https://whatsapp-mcp-route-whatsapp-mcp.apps.rosa.akram.a1ey.p3.openshiftapps.com/sse'))
 print('LLAMASTACK_MODEL:', os.getenv('LLAMASTACK_MODEL', 'claude-3-5-sonnet-20241022'))
 print('LLAMASTACK_TEMPERATURE:', os.getenv('LLAMASTACK_TEMPERATURE', '0.7'))
 print('LLAMASTACK_MAX_TOKENS:', os.getenv('LLAMASTACK_MAX_TOKENS', '200'))
