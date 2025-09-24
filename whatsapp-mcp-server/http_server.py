@@ -503,13 +503,10 @@ async def upload_and_send_audio(
         logger.error(f"Error uploading and sending audio: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
-        # Clean up temporary file
-        if temp_file_path and os.path.exists(temp_file_path):
-            try:
-                os.unlink(temp_file_path)
-                logger.info(f"Cleaned up temporary file: {temp_file_path}")
-            except Exception as e:
-                logger.warning(f"Failed to delete temporary file {temp_file_path}: {e}")
+        # Note: We don't clean up the temporary file here because it might be used by the WhatsApp bridge
+        # The WhatsApp bridge or the audio conversion function should handle cleanup
+        # TODO: Implement proper cleanup mechanism
+        pass
 
 @app.post("/api/files/upload")
 async def upload_and_send_file(
