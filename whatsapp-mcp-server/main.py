@@ -1,5 +1,6 @@
 from typing import List, Dict, Any, Optional
 from mcp.server.fastmcp import FastMCP
+from starlette.responses import PlainTextResponse, JSONResponse
 from whatsapp import (
     search_contacts as whatsapp_search_contacts,
     list_messages as whatsapp_list_messages,
@@ -18,7 +19,12 @@ from whatsapp import (
 # Initialize FastMCP server
 mcp = FastMCP("whatsapp")
 
-@mcp.tool()
+@mcp.tool(
+    name="search_contacts",
+    description="Search WhatsApp contacts by name or phone number.",
+    tags={"contacts", "search"},
+    meta={"version": "1.0", "category": "contacts"}
+)
 def search_contacts(query: str) -> List[Dict[str, Any]]:
     """Search WhatsApp contacts by name or phone number.
     
@@ -28,7 +34,12 @@ def search_contacts(query: str) -> List[Dict[str, Any]]:
     contacts = whatsapp_search_contacts(query)
     return contacts
 
-@mcp.tool()
+@mcp.tool(
+    name="list_messages",
+    description="Get WhatsApp messages matching specified criteria with optional context.",
+    tags={"messages", "search", "context"},
+    meta={"version": "1.0", "category": "messages"}
+)
 def list_messages(
     after: Optional[str] = None,
     before: Optional[str] = None,
@@ -69,7 +80,12 @@ def list_messages(
     )
     return messages
 
-@mcp.tool()
+@mcp.tool(
+    name="list_chats",
+    description="Get WhatsApp chats matching specified criteria.",
+    tags={"chats", "list"},
+    meta={"version": "1.0", "category": "chats"}
+)
 def list_chats(
     query: Optional[str] = None,
     limit: int = 20,
@@ -95,7 +111,12 @@ def list_chats(
     )
     return chats
 
-@mcp.tool()
+@mcp.tool(
+    name="get_chat",
+    description="Get WhatsApp chat metadata by JID.",
+    tags={"chats", "metadata"},
+    meta={"version": "1.0", "category": "chats"}
+)
 def get_chat(chat_jid: str, include_last_message: bool = True) -> Dict[str, Any]:
     """Get WhatsApp chat metadata by JID.
     
@@ -106,7 +127,12 @@ def get_chat(chat_jid: str, include_last_message: bool = True) -> Dict[str, Any]
     chat = whatsapp_get_chat(chat_jid, include_last_message)
     return chat
 
-@mcp.tool()
+@mcp.tool(
+    name="get_direct_chat_by_contact",
+    description="Get WhatsApp chat metadata by sender phone number.",
+    tags={"chats", "contacts"},
+    meta={"version": "1.0", "category": "chats"}
+)
 def get_direct_chat_by_contact(sender_phone_number: str) -> Dict[str, Any]:
     """Get WhatsApp chat metadata by sender phone number.
     
@@ -116,7 +142,12 @@ def get_direct_chat_by_contact(sender_phone_number: str) -> Dict[str, Any]:
     chat = whatsapp_get_direct_chat_by_contact(sender_phone_number)
     return chat
 
-@mcp.tool()
+@mcp.tool(
+    name="get_contact_chats",
+    description="Get all WhatsApp chats involving the contact.",
+    tags={"chats", "contacts"},
+    meta={"version": "1.0", "category": "chats"}
+)
 def get_contact_chats(jid: str, limit: int = 20, page: int = 0) -> List[Dict[str, Any]]:
     """Get all WhatsApp chats involving the contact.
     
@@ -128,7 +159,12 @@ def get_contact_chats(jid: str, limit: int = 20, page: int = 0) -> List[Dict[str
     chats = whatsapp_get_contact_chats(jid, limit, page)
     return chats
 
-@mcp.tool()
+@mcp.tool(
+    name="get_last_interaction",
+    description="Get most recent WhatsApp message involving the contact.",
+    tags={"messages", "contacts"},
+    meta={"version": "1.0", "category": "messages"}
+)
 def get_last_interaction(jid: str) -> str:
     """Get most recent WhatsApp message involving the contact.
     
@@ -138,7 +174,12 @@ def get_last_interaction(jid: str) -> str:
     message = whatsapp_get_last_interaction(jid)
     return message
 
-@mcp.tool()
+@mcp.tool(
+    name="get_message_context",
+    description="Get context around a specific WhatsApp message.",
+    tags={"messages", "context"},
+    meta={"version": "1.0", "category": "messages"}
+)
 def get_message_context(
     message_id: str,
     before: int = 5,
@@ -154,7 +195,12 @@ def get_message_context(
     context = whatsapp_get_message_context(message_id, before, after)
     return context
 
-@mcp.tool()
+@mcp.tool(
+    name="send_message",
+    description="Send a WhatsApp message to a person or group.",
+    tags={"messages", "send"},
+    meta={"version": "1.0", "category": "messaging"}
+)
 def send_message(
     recipient: str,
     message: str
@@ -183,7 +229,12 @@ def send_message(
         "message": status_message
     }
 
-@mcp.tool()
+@mcp.tool(
+    name="send_file",
+    description="Send a file such as a picture, raw audio, video or document via WhatsApp.",
+    tags={"files", "send", "media"},
+    meta={"version": "1.0", "category": "messaging"}
+)
 def send_file(recipient: str, media_path: str) -> Dict[str, Any]:
     """Send a file such as a picture, raw audio, video or document via WhatsApp to the specified recipient. For group messages use the JID.
     
@@ -203,7 +254,12 @@ def send_file(recipient: str, media_path: str) -> Dict[str, Any]:
         "message": status_message
     }
 
-@mcp.tool()
+@mcp.tool(
+    name="send_audio_message",
+    description="Send any audio file as a WhatsApp audio message.",
+    tags={"audio", "send", "media"},
+    meta={"version": "1.0", "category": "messaging"}
+)
 def send_audio_message(recipient: str, media_path: str) -> Dict[str, Any]:
     """Send any audio file as a WhatsApp audio message to the specified recipient. For group messages use the JID. If it errors due to ffmpeg not being installed, use send_file instead.
     
@@ -221,7 +277,12 @@ def send_audio_message(recipient: str, media_path: str) -> Dict[str, Any]:
         "message": status_message
     }
 
-@mcp.tool()
+@mcp.tool(
+    name="download_media",
+    description="Download media from a WhatsApp message and get the local file path.",
+    tags={"media", "download"},
+    meta={"version": "1.0", "category": "media"}
+)
 def download_media(message_id: str, chat_jid: str) -> Dict[str, Any]:
     """Download media from a WhatsApp message and get the local file path.
     
@@ -246,13 +307,61 @@ def download_media(message_id: str, chat_jid: str) -> Dict[str, Any]:
             "message": "Failed to download media"
         }
 
+# Custom HTTP routes for health check and tools listing
+@mcp.custom_route("/health", methods=["GET"])
+async def health_check(request):
+    """Health check endpoint for monitoring."""
+    return PlainTextResponse("OK")
+
+@mcp.custom_route("/tools", methods=["GET"])
+async def list_tools(request):
+    """List all available MCP tools with their descriptions and parameters."""
+    tools = []
+    for tool_name, tool_func in mcp.tools.items():
+        tool_info = {
+            "name": tool_name,
+            "description": tool_func.__doc__ or "No description available"
+        }
+        
+        # Try to get parameter information from function signature
+        import inspect
+        sig = inspect.signature(tool_func)
+        if sig.parameters:
+            tool_info["parameters"] = {}
+            for param_name, param in sig.parameters.items():
+                param_info = {
+                    "type": str(param.annotation) if param.annotation != inspect.Parameter.empty else "string",
+                    "description": f"Parameter: {param_name}"
+                }
+                if param.default != inspect.Parameter.empty:
+                    param_info["default"] = param.default
+                tool_info["parameters"][param_name] = param_info
+        
+        tools.append(tool_info)
+    
+    return JSONResponse({"tools": tools})
+
+@mcp.custom_route("/", methods=["GET"])
+async def root_info(request):
+    """Root endpoint with API information."""
+    return JSONResponse({
+        "name": "WhatsApp MCP Server",
+        "version": "1.0.0",
+        "transport": "FastMCP SSE",
+        "endpoints": {
+            "mcp_sse": "/sse",
+            "health": "/health",
+            "tools": "/tools"
+        }
+    })
+
 if __name__ == "__main__":
     import os
     
     # Get configuration from environment variables
     host = os.getenv("MCP_HOST", "0.0.0.0")
     port = int(os.getenv("MCP_PORT", "3000"))
-    transport = os.getenv("MCP_TRANSPORT", "sse")  # Default to SSE
+    transport = os.getenv("MCP_TRANSPORT", "sse")  # Default to SSE for LlamaStack compatibility
     
     print(f"🚀 Starting WhatsApp MCP server...")
     print(f"   Transport: {transport}")
@@ -261,9 +370,18 @@ if __name__ == "__main__":
     
     if transport == "sse":
         print(f"   SSE Endpoint: http://{host}:{port}/sse")
-        print(f"   This will properly implement MCP protocol over SSE")
+        print(f"   Custom HTTP Endpoints:")
+        print(f"     - Root: http://{host}:{port}/")
+        print(f"     - Health: http://{host}:{port}/health")
+        print(f"     - Tools: http://{host}:{port}/tools")
+        print(f"   This provides both MCP protocol over SSE and HTTP API endpoints")
+    elif transport == "http":
+        print(f"   HTTP Endpoints:")
+        print(f"     - Root: http://{host}:{port}/")
+        print(f"     - Health: http://{host}:{port}/health")
+        print(f"     - Tools: http://{host}:{port}/tools")
+        print(f"     - MCP: http://{host}:{port}/mcp")
+        print(f"   This provides both MCP protocol and HTTP API endpoints")
     
-    # Initialize and run the MCP server with SSE transport
-    mcp.settings.host = host
-    mcp.settings.port = port    
-    mcp.run(transport=transport)
+    # Initialize and run the MCP server
+    mcp.run(transport=transport, host=host, port=port)
