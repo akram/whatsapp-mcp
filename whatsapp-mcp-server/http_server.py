@@ -456,56 +456,63 @@ async def upload_and_send_audio(
     file: UploadFile = File(...)
 ):
     """Upload an audio file and send it as a WhatsApp audio message."""
-    temp_file_path = None
+    persistent_file_path = None
     try:
         # Validate file type
         if not file.content_type or not file.content_type.startswith('audio/'):
             raise HTTPException(status_code=400, detail="File must be an audio file")
         
-        # Create temporary file with proper extension
-        file_extension = file.filename.split('.')[-1] if '.' in file.filename else 'tmp'
-        with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file_extension}") as temp_file:
-            temp_file_path = temp_file.name
-            
-            # Copy uploaded file to temporary location
-            shutil.copyfileobj(file.file, temp_file)
-            temp_file.flush()  # Ensure data is written to disk
+        # Create uploads directory if it doesn't exist
+        uploads_dir = "/app/uploads"
+        os.makedirs(uploads_dir, exist_ok=True)
+        
+        # Create persistent file with original filename and timestamp
+        import time
+        timestamp = int(time.time())
+        safe_filename = file.filename.replace(" ", "_").replace("/", "_").replace("\\", "_")
+        persistent_file_path = os.path.join(uploads_dir, f"{timestamp}_{safe_filename}")
+        
+        # Write uploaded file to persistent location
+        with open(persistent_file_path, "wb") as persistent_file:
+            shutil.copyfileobj(file.file, persistent_file)
+            persistent_file.flush()  # Ensure data is written to disk
         
         # Verify the file exists and has content
-        if not os.path.exists(temp_file_path):
-            raise HTTPException(status_code=500, detail="Temporary file was not created")
+        if not os.path.exists(persistent_file_path):
+            raise HTTPException(status_code=500, detail="Persistent file was not created")
         
-        file_size = os.path.getsize(temp_file_path)
+        file_size = os.path.getsize(persistent_file_path)
         if file_size == 0:
             raise HTTPException(status_code=400, detail="Uploaded file is empty")
         
-        logger.info(f"Created temporary file: {temp_file_path} (size: {file_size} bytes)")
+        logger.info(f"Created persistent file: {persistent_file_path} (size: {file_size} bytes)")
         
         # Send the audio message
-        success, status_message = whatsapp_audio_voice_message(recipient, temp_file_path)
+        success, status_message = whatsapp_audio_voice_message(recipient, persistent_file_path)
         
         await broadcast_event("audio_uploaded_and_sent", {
             "recipient": recipient,
             "filename": file.filename,
             "content_type": file.content_type,
             "success": success,
-            "message": status_message
+            "message": status_message,
+            "file_path": persistent_file_path
         })
         
         return {
             "success": success, 
             "message": status_message,
             "filename": file.filename,
-            "content_type": file.content_type
+            "content_type": file.content_type,
+            "file_path": persistent_file_path
         }
         
     except Exception as e:
         logger.error(f"Error uploading and sending audio: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
-        # Note: We don't clean up the temporary file here because it might be used by the WhatsApp bridge
-        # The WhatsApp bridge or the audio conversion function should handle cleanup
-        # TODO: Implement proper cleanup mechanism
+        # Note: We keep the persistent file for potential debugging and reuse
+        # TODO: Implement cleanup mechanism for old files (e.g., files older than 1 hour)
         pass
 
 @app.post("/api/files/upload")
@@ -514,56 +521,60 @@ async def upload_and_send_file(
     file: UploadFile = File(...)
 ):
     """Upload a file and send it via WhatsApp."""
-    temp_file_path = None
+    persistent_file_path = None
     try:
-        # Create temporary file with proper extension
-        file_extension = file.filename.split('.')[-1] if '.' in file.filename else 'tmp'
-        with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file_extension}") as temp_file:
-            temp_file_path = temp_file.name
-            
-            # Copy uploaded file to temporary location
-            shutil.copyfileobj(file.file, temp_file)
-            temp_file.flush()  # Ensure data is written to disk
+        # Create uploads directory if it doesn't exist
+        uploads_dir = "/app/uploads"
+        os.makedirs(uploads_dir, exist_ok=True)
+        
+        # Create persistent file with original filename and timestamp
+        import time
+        timestamp = int(time.time())
+        safe_filename = file.filename.replace(" ", "_").replace("/", "_").replace("\\", "_")
+        persistent_file_path = os.path.join(uploads_dir, f"{timestamp}_{safe_filename}")
+        
+        # Write uploaded file to persistent location
+        with open(persistent_file_path, "wb") as persistent_file:
+            shutil.copyfileobj(file.file, persistent_file)
+            persistent_file.flush()  # Ensure data is written to disk
         
         # Verify the file exists and has content
-        if not os.path.exists(temp_file_path):
-            raise HTTPException(status_code=500, detail="Temporary file was not created")
+        if not os.path.exists(persistent_file_path):
+            raise HTTPException(status_code=500, detail="Persistent file was not created")
         
-        file_size = os.path.getsize(temp_file_path)
+        file_size = os.path.getsize(persistent_file_path)
         if file_size == 0:
             raise HTTPException(status_code=400, detail="Uploaded file is empty")
         
-        logger.info(f"Created temporary file: {temp_file_path} (size: {file_size} bytes)")
+        logger.info(f"Created persistent file: {persistent_file_path} (size: {file_size} bytes)")
         
         # Send the file
-        success, status_message = whatsapp_send_file(recipient, temp_file_path)
+        success, status_message = whatsapp_send_file(recipient, persistent_file_path)
         
         await broadcast_event("file_uploaded_and_sent", {
             "recipient": recipient,
             "filename": file.filename,
             "content_type": file.content_type,
             "success": success,
-            "message": status_message
+            "message": status_message,
+            "file_path": persistent_file_path
         })
         
         return {
             "success": success, 
             "message": status_message,
             "filename": file.filename,
-            "content_type": file.content_type
+            "content_type": file.content_type,
+            "file_path": persistent_file_path
         }
         
     except Exception as e:
         logger.error(f"Error uploading and sending file: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
-        # Clean up temporary file
-        if temp_file_path and os.path.exists(temp_file_path):
-            try:
-                os.unlink(temp_file_path)
-                logger.info(f"Cleaned up temporary file: {temp_file_path}")
-            except Exception as e:
-                logger.warning(f"Failed to delete temporary file {temp_file_path}: {e}")
+        # Note: We keep the persistent file for potential debugging and reuse
+        # TODO: Implement cleanup mechanism for old files (e.g., files older than 1 hour)
+        pass
 
 @app.post("/api/media/download")
 async def download_media_api(message_id: str, chat_jid: str):
