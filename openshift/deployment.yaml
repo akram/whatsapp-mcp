@@ -71,6 +71,8 @@ spec:
           value: "true"
         - name: HTTP_PORT
           value: "3001"
+        - name: MESSAGES_DB_PATH
+          value: "/app/store/messages.db"
         volumeMounts:
         - name: whatsapp-data
           mountPath: /app/store
