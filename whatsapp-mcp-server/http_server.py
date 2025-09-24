@@ -463,6 +463,7 @@ async def upload_and_send_audio(
             raise HTTPException(status_code=400, detail="File must be an audio file")
         
         # Create temporary file
+        temp_file_path = None
         with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file.filename.split('.')[-1]}") as temp_file:
             temp_file_path = temp_file.name
             
@@ -470,8 +471,17 @@ async def upload_and_send_audio(
             shutil.copyfileobj(file.file, temp_file)
             temp_file.flush()  # Ensure data is written to disk
         
-        # Send the audio message
-        success, status_message = whatsapp_audio_voice_message(recipient, temp_file_path)
+        try:
+            # Verify the file exists and has content
+            if not os.path.exists(temp_file_path):
+                raise HTTPException(status_code=500, detail="Temporary file was not created")
+            
+            file_size = os.path.getsize(temp_file_path)
+            if file_size == 0:
+                raise HTTPException(status_code=400, detail="Uploaded file is empty")
+            
+            # Send the audio message
+            success, status_message = whatsapp_audio_voice_message(recipient, temp_file_path)
         
         await broadcast_event("audio_uploaded_and_sent", {
             "recipient": recipient,
