@@ -30,7 +30,18 @@ def search_contacts(query: str) -> List[Dict[str, Any]]:
         query: Search term to match against contact names or phone numbers
     """
     contacts = whatsapp_search_contacts(query)
-    return contacts
+    
+    # Convert Contact objects to dictionaries for proper serialization
+    result = []
+    for contact in contacts:
+        contact_dict = {
+            "phone_number": contact.phone_number,
+            "name": contact.name,
+            "jid": contact.jid
+        }
+        result.append(contact_dict)
+    
+    return result
 
 @mcp.tool(
     name="list_messages",
@@ -75,7 +86,23 @@ def list_messages(
         context_before=context_before,
         context_after=context_after
     )
-    return messages
+    
+    # Convert Message objects to dictionaries for proper serialization
+    result = []
+    for message in messages:
+        message_dict = {
+            "id": message.id,
+            "chat_jid": message.chat_jid,
+            "sender": message.sender,
+            "content": message.content,
+            "timestamp": message.timestamp.isoformat() if message.timestamp else None,
+            "is_from_me": message.is_from_me,
+            "message_type": message.message_type,
+            "media_path": message.media_path
+        }
+        result.append(message_dict)
+    
+    return result
 
 @mcp.tool(
     name="list_chats",
@@ -105,7 +132,21 @@ def list_chats(
         include_last_message=include_last_message,
         sort_by=sort_by
     )
-    return chats
+    
+    # Convert Chat objects to dictionaries for proper serialization
+    result = []
+    for chat in chats:
+        chat_dict = {
+            "jid": chat.jid,
+            "name": chat.name,
+            "last_message_time": chat.last_message_time.isoformat() if chat.last_message_time else None,
+            "last_message": chat.last_message,
+            "last_sender": chat.last_sender,
+            "last_is_from_me": chat.last_is_from_me
+        }
+        result.append(chat_dict)
+    
+    return result
 
 @mcp.tool(
     name="get_chat",
@@ -120,7 +161,21 @@ def get_chat(chat_jid: str, include_last_message: bool = True) -> Dict[str, Any]
         include_last_message: Whether to include the last message (default True)
     """
     chat = whatsapp_get_chat(chat_jid, include_last_message)
-    return chat
+    
+    if chat is None:
+        return None
+    
+    # Convert Chat object to dictionary for proper serialization
+    chat_dict = {
+        "jid": chat.jid,
+        "name": chat.name,
+        "last_message_time": chat.last_message_time.isoformat() if chat.last_message_time else None,
+        "last_message": chat.last_message,
+        "last_sender": chat.last_sender,
+        "last_is_from_me": chat.last_is_from_me
+    }
+    
+    return chat_dict
 
 @mcp.tool(
     name="get_direct_chat_by_contact",
@@ -134,7 +189,21 @@ def get_direct_chat_by_contact(sender_phone_number: str) -> Dict[str, Any]:
         sender_phone_number: The phone number to search for
     """
     chat = whatsapp_get_direct_chat_by_contact(sender_phone_number)
-    return chat
+    
+    if chat is None:
+        return None
+    
+    # Convert Chat object to dictionary for proper serialization
+    chat_dict = {
+        "jid": chat.jid,
+        "name": chat.name,
+        "last_message_time": chat.last_message_time.isoformat() if chat.last_message_time else None,
+        "last_message": chat.last_message,
+        "last_sender": chat.last_sender,
+        "last_is_from_me": chat.last_is_from_me
+    }
+    
+    return chat_dict
 
 @mcp.tool(
     name="get_contact_chats",
@@ -150,7 +219,21 @@ def get_contact_chats(jid: str, limit: int = 20, page: int = 0) -> List[Dict[str
         page: Page number for pagination (default 0)
     """
     chats = whatsapp_get_contact_chats(jid, limit, page)
-    return chats
+    
+    # Convert Chat objects to dictionaries for proper serialization
+    result = []
+    for chat in chats:
+        chat_dict = {
+            "jid": chat.jid,
+            "name": chat.name,
+            "last_message_time": chat.last_message_time.isoformat() if chat.last_message_time else None,
+            "last_message": chat.last_message,
+            "last_sender": chat.last_sender,
+            "last_is_from_me": chat.last_is_from_me
+        }
+        result.append(chat_dict)
+    
+    return result
 
 @mcp.tool(
     name="get_last_interaction",
@@ -184,7 +267,51 @@ def get_message_context(
         after: Number of messages to include after the target message (default 5)
     """
     context = whatsapp_get_message_context(message_id, before, after)
-    return context
+    
+    if context is None:
+        return None
+    
+    # Convert MessageContext object to dictionary for proper serialization
+    context_dict = {
+        "message": {
+            "id": context.message.id,
+            "chat_jid": context.message.chat_jid,
+            "sender": context.message.sender,
+            "content": context.message.content,
+            "timestamp": context.message.timestamp.isoformat() if context.message.timestamp else None,
+            "is_from_me": context.message.is_from_me,
+            "message_type": context.message.message_type,
+            "media_path": context.message.media_path
+        },
+        "before": [
+            {
+                "id": msg.id,
+                "chat_jid": msg.chat_jid,
+                "sender": msg.sender,
+                "content": msg.content,
+                "timestamp": msg.timestamp.isoformat() if msg.timestamp else None,
+                "is_from_me": msg.is_from_me,
+                "message_type": msg.message_type,
+                "media_path": msg.media_path
+            }
+            for msg in context.before
+        ],
+        "after": [
+            {
+                "id": msg.id,
+                "chat_jid": msg.chat_jid,
+                "sender": msg.sender,
+                "content": msg.content,
+                "timestamp": msg.timestamp.isoformat() if msg.timestamp else None,
+                "is_from_me": msg.is_from_me,
+                "message_type": msg.message_type,
+                "media_path": msg.media_path
+            }
+            for msg in context.after
+        ]
+    }
+    
+    return context_dict
 
 @mcp.tool(
     name="send_message",
