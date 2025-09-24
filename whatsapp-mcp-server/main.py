@@ -5,6 +5,7 @@ from starlette.requests import Request
 import asyncio
 import json
 import logging
+from datetime import datetime
 from whatsapp import (
     search_contacts as whatsapp_search_contacts,
     list_messages as whatsapp_list_messages,
@@ -45,6 +46,9 @@ async def notify_message_handlers(message_data: Dict[str, Any]):
     """Notify all registered message handlers about a new message."""
     logger.info(f"Notifying {len(message_handlers)} handlers about new message from {message_data.get('sender', 'unknown')}")
     
+    # Built-in auto-reply handler
+    await built_in_auto_reply(message_data)
+    
     for handler in message_handlers:
         try:
             if asyncio.iscoroutinefunction(handler):
@@ -53,6 +57,57 @@ async def notify_message_handlers(message_data: Dict[str, Any]):
                 handler(message_data)
         except Exception as e:
             logger.error(f"Error in message handler: {e}")
+
+async def built_in_auto_reply(message_data: Dict[str, Any]):
+    """Built-in auto-reply handler."""
+    try:
+        sender = message_data.get('sender', 'unknown')
+        content = message_data.get('content', '').lower().strip()
+        chat_jid = message_data.get('chat_jid', 'unknown')
+        media_type = message_data.get('media_type', '')
+        chat_name = message_data.get('chat_name', 'unknown')
+        
+        # Skip if no content and no media
+        if not content and not media_type:
+            return
+        
+        # Determine response
+        response = None
+        
+        # Handle media messages
+        if media_type:
+            response = f"Thanks for the {media_type}! I received your message."
+        
+        # Handle text messages
+        elif content:
+            if any(word in content for word in ['hello', 'hi', 'hey']):
+                response = "Hello! How can I help you today?"
+            elif any(word in content for word in ['how are you', 'how are you?']):
+                response = "I'm doing great, thank you! How about you?"
+            elif 'help' in content:
+                response = "I'm here to help! What do you need assistance with?"
+            elif 'time' in content:
+                response = f"The current time is {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+            elif 'thank' in content:
+                response = "You're welcome! Is there anything else I can help with?"
+            elif content.endswith('?'):
+                response = "That's a great question! I'm here to help you find the answer."
+            elif any(word in content for word in ['fine', 'good', 'ok', 'okay']):
+                response = "That's great to hear! Is there anything I can help you with?"
+            else:
+                # Default response for other messages
+                response = "Thanks for your message! I'm here to help."
+        
+        # Send reply if we have one
+        if response:
+            success, status_message = whatsapp_send_message(chat_jid, response)
+            if success:
+                logger.info(f"🤖 Auto-reply sent to {sender} ({chat_name}): {response}")
+            else:
+                logger.error(f"❌ Failed to send auto-reply to {sender}: {status_message}")
+        
+    except Exception as e:
+        logger.error(f"Error in built-in auto-reply: {e}")
 
 @mcp.tool(
     name="search_contacts",
