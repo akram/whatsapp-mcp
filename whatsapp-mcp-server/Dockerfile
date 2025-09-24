@@ -42,17 +42,14 @@ COPY --from=builder /app/.venv /app/.venv
 # Copy application code (this layer will be rebuilt when code changes)
 COPY . .
 
-# Set permissions
-RUN chown -R appuser:appgroup /app
+# Create uploads directory and set permissions
+RUN mkdir -p /app/uploads && chown -R appuser:appgroup /app
 
 # Switch to non-root user
 USER appuser
 
-# Activate virtual environment and ensure python-multipart is available
+# Activate virtual environment
 ENV PATH="/app/.venv/bin:$PATH"
-
-# Ensure python-multipart is installed (fallback if not in uv.lock)
-RUN python -c "import multipart; print('python-multipart is available')" 2>/dev/null || (echo "Installing python-multipart manually" && pip install python-multipart && python -c "import multipart; print('python-multipart installed successfully')")
 
 # Expose port (MCP typically uses stdio, but we'll expose for health checks)
 EXPOSE 3000
