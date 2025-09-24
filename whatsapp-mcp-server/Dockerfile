@@ -42,8 +42,8 @@ COPY --from=builder /app/.venv /app/.venv
 # Copy application code (this layer will be rebuilt when code changes)
 COPY . .
 
-# Create uploads directory and set permissions
-RUN mkdir -p /app/uploads && chown -R appuser:appgroup /app
+# Set permissions
+RUN chown -R appuser:appgroup /app
 
 # Switch to non-root user
 USER appuser
