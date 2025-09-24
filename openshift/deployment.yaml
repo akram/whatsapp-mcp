@@ -41,14 +41,6 @@ spec:
           limits:
             memory: "512Mi"
             cpu: "500m"
-        livenessProbe:
-          httpGet:
-            path: /api/health
-            port: 8080
-          initialDelaySeconds: 30
-          periodSeconds: 30
-          timeoutSeconds: 10
-          failureThreshold: 3
         securityContext:
           allowPrivilegeEscalation: false
           runAsNonRoot: true
@@ -91,16 +83,6 @@ spec:
           limits:
             memory: "256Mi"
             cpu: "200m"
-        livenessProbe:
-          exec:
-            command:
-            - python
-            - -c
-            - "import sys; sys.exit(0)"
-          initialDelaySeconds: 30
-          periodSeconds: 30
-          timeoutSeconds: 10
-          failureThreshold: 3
         readinessProbe:
           exec:
             command:
