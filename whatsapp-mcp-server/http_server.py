@@ -462,26 +462,27 @@ async def upload_and_send_audio(
         if not file.content_type or not file.content_type.startswith('audio/'):
             raise HTTPException(status_code=400, detail="File must be an audio file")
         
-        # Create temporary file
-        temp_file_path = None
-        with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file.filename.split('.')[-1]}") as temp_file:
+        # Create temporary file with proper extension
+        file_extension = file.filename.split('.')[-1] if '.' in file.filename else 'tmp'
+        with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file_extension}") as temp_file:
             temp_file_path = temp_file.name
             
             # Copy uploaded file to temporary location
             shutil.copyfileobj(file.file, temp_file)
             temp_file.flush()  # Ensure data is written to disk
         
-        try:
-            # Verify the file exists and has content
-            if not os.path.exists(temp_file_path):
-                raise HTTPException(status_code=500, detail="Temporary file was not created")
-            
-            file_size = os.path.getsize(temp_file_path)
-            if file_size == 0:
-                raise HTTPException(status_code=400, detail="Uploaded file is empty")
-            
-            # Send the audio message
-            success, status_message = whatsapp_audio_voice_message(recipient, temp_file_path)
+        # Verify the file exists and has content
+        if not os.path.exists(temp_file_path):
+            raise HTTPException(status_code=500, detail="Temporary file was not created")
+        
+        file_size = os.path.getsize(temp_file_path)
+        if file_size == 0:
+            raise HTTPException(status_code=400, detail="Uploaded file is empty")
+        
+        logger.info(f"Created temporary file: {temp_file_path} (size: {file_size} bytes)")
+        
+        # Send the audio message
+        success, status_message = whatsapp_audio_voice_message(recipient, temp_file_path)
         
         await broadcast_event("audio_uploaded_and_sent", {
             "recipient": recipient,
@@ -506,6 +507,7 @@ async def upload_and_send_audio(
         if temp_file_path and os.path.exists(temp_file_path):
             try:
                 os.unlink(temp_file_path)
+                logger.info(f"Cleaned up temporary file: {temp_file_path}")
             except Exception as e:
                 logger.warning(f"Failed to delete temporary file {temp_file_path}: {e}")
 
@@ -517,12 +519,24 @@ async def upload_and_send_file(
     """Upload a file and send it via WhatsApp."""
     temp_file_path = None
     try:
-        # Create temporary file
-        with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file.filename.split('.')[-1]}") as temp_file:
+        # Create temporary file with proper extension
+        file_extension = file.filename.split('.')[-1] if '.' in file.filename else 'tmp'
+        with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file_extension}") as temp_file:
             temp_file_path = temp_file.name
             
             # Copy uploaded file to temporary location
             shutil.copyfileobj(file.file, temp_file)
+            temp_file.flush()  # Ensure data is written to disk
+        
+        # Verify the file exists and has content
+        if not os.path.exists(temp_file_path):
+            raise HTTPException(status_code=500, detail="Temporary file was not created")
+        
+        file_size = os.path.getsize(temp_file_path)
+        if file_size == 0:
+            raise HTTPException(status_code=400, detail="Uploaded file is empty")
+        
+        logger.info(f"Created temporary file: {temp_file_path} (size: {file_size} bytes)")
         
         # Send the file
         success, status_message = whatsapp_send_file(recipient, temp_file_path)
@@ -550,6 +564,7 @@ async def upload_and_send_file(
         if temp_file_path and os.path.exists(temp_file_path):
             try:
                 os.unlink(temp_file_path)
+                logger.info(f"Cleaned up temporary file: {temp_file_path}")
             except Exception as e:
                 logger.warning(f"Failed to delete temporary file {temp_file_path}: {e}")
 
