@@ -195,7 +195,7 @@ async def create_llamastack_client():
         # WHATSAPP_MCP_SSE_URL: The MCP server endpoint (can be localhost)
         llamastack_base_url = os.getenv("LLAMASTACK_BASE_URL", "http://ragathon-team-3-ragathon-team-3.apps.llama-rag-pool-b84hp.aws.rh-ods.com/")
         whatsapp_mcp_sse_url = os.getenv("WHATSAPP_MCP_SSE_URL", "https://whatsapp-mcp-route-whatsapp-mcp.apps.rosa.akram.a1ey.p3.openshiftapps.com/sse")
-        llamastack_model = os.getenv("LLAMASTACK_MODEL", "claude-3-5-sonnet-20241022")
+        llamastack_model = os.getenv("LLAMASTACK_MODEL", "vllm-inference/llama-3-2-3b-instruct")
         llamastack_temperature = float(os.getenv("LLAMASTACK_TEMPERATURE", "0.7"))
         llamastack_max_tokens = int(os.getenv("LLAMASTACK_MAX_TOKENS", "200"))
         
