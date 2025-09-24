@@ -89,11 +89,11 @@ async def built_in_auto_reply(message_data: Dict[str, Any]):
 async def generate_llamastack_response(content: str, media_type: str, sender: str, chat_name: str, chat_jid: str) -> str:
     """Generate intelligent response using LlamaStack MCP client with tool access."""
     try:
-        # Create LlamaStack client for this session
-        client = await create_llamastack_client()
+        # Create LlamaStack agent for this session
+        agent = await create_llamastack_client()
         
-        if not client:
-            logger.error("Failed to create LlamaStack client")
+        if not agent:
+            logger.error("Failed to create LlamaStack agent")
             return None
         
         # Get recent conversation context using MCP tools
@@ -102,17 +102,8 @@ async def generate_llamastack_response(content: str, media_type: str, sender: st
         # Prepare context for the AI
         context = build_ai_context(content, media_type, sender, chat_name, recent_messages)
         
-        # Use LlamaStack to generate response with tool access
-        response = await client.generate_response_with_tools(context, available_tools=[
-            "search_contacts",
-            "list_messages", 
-            "list_chats",
-            "get_chat",
-            "send_message"
-        ])
-        
-        # Clean up client
-        await client.close()
+        # Use LlamaStack agent to generate response with tool access
+        response = agent.run(context)
         
         return response
         
@@ -184,7 +175,7 @@ def build_ai_context(content: str, media_type: str, sender: str, chat_name: str,
 async def create_llamastack_client():
     """Create a LlamaStack MCP client for this session."""
     try:
-        from llama_stack_client import LlamaStackClient
+        from llama_stack_client import LlamaStackClient, Agent
         
         # Get LlamaStack configuration from environment variables
         # LLAMASTACK_BASE_URL: The LlamaStack service URL (external)
@@ -199,23 +190,59 @@ async def create_llamastack_client():
         logger.info(f"🔗 WhatsApp MCP SSE URL: {whatsapp_mcp_sse_url}")
         logger.info(f"🤖 Using model: {llamastack_model}")
         
-        # Create client with LlamaStack base URL
+        # Create client with LlamaStack base URL only
         # LlamaStack client connects to the LlamaStack service (llamastack_base_url)
-        # The MCP server provides WhatsApp tools to LlamaStack via the base URL
-        client = LlamaStackClient(
-            base_url=llamastack_base_url,
+        client = LlamaStackClient(base_url=llamastack_base_url)
+        
+        logger.info("✅ LlamaStack client created successfully")
+        logger.info(f"🔗 Connected to LlamaStack service at: {llamastack_base_url}")
+        
+        # Register the WhatsApp MCP toolgroup
+        toolgroup_id = "mcp::whatsapp-mcp-auto-reply"
+        try:
+            # Unregister any existing toolgroup first
+            existing_toolgroups = client.toolgroups.list()
+            for tg in existing_toolgroups:
+                if toolgroup_id in tg.identifier:
+                    logger.info(f"🗑️ Unregistering existing toolgroup: {tg.identifier}")
+                    client.toolgroups.unregister(toolgroup_id=tg.identifier)
+            
+            # Register the WhatsApp MCP toolgroup
+            client.toolgroups.register(
+                toolgroup_id=toolgroup_id,
+                provider_id="model-context-protocol",
+                mcp_endpoint={"uri": whatsapp_mcp_sse_url},
+            )
+            
+            logger.info(f"✅ WhatsApp MCP toolgroup registered: {toolgroup_id}")
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to register toolgroup: {e}")
+            return None
+        
+        # Create agent with model parameters
+        agent = Agent(
+            client,
             model=llamastack_model,
-            temperature=llamastack_temperature,
-            max_tokens=llamastack_max_tokens
+            instructions="""You are a helpful WhatsApp assistant. You can use the WhatsApp MCP tools to:
+- Search and manage WhatsApp contacts
+- List and read WhatsApp messages
+- Manage WhatsApp chats
+- Send messages and files
+- Get message context and interactions
+
+Always be helpful and provide clear information about WhatsApp operations.""",
+            tools=[toolgroup_id],
         )
         
-        # Initialize the client
-        await client.initialize()
-        
-        logger.info("✅ LlamaStack client created and initialized successfully")
-        logger.info(f"🔗 Connected to LlamaStack service at: {llamastack_base_url}")
+        logger.info("✅ Agent created successfully")
         logger.info(f"🤖 Using AI model: {llamastack_model}")
-        return client
+        
+        # Create a session for this task
+        session_id = agent.create_session("whatsapp_auto_reply_session")
+        logger.info(f"📱 Created session: {session_id}")
+        
+        return agent
         
     except ImportError:
         logger.error("❌ LlamaStack not installed. Install with: pip install llama-stack")
