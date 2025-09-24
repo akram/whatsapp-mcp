@@ -1,8 +1,11 @@
 import asyncio
 import json
 import logging
+import os
+import tempfile
+import shutil
 from typing import Dict, List, Any, Optional
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.responses import StreamingResponse
 from sse_starlette import EventSourceResponse
 import uvicorn
@@ -446,6 +449,98 @@ async def send_audio_message_api(recipient: str, media_path: str):
     except Exception as e:
         logger.error(f"Error sending audio: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/audio/upload")
+async def upload_and_send_audio(
+    recipient: str = Form(...),
+    file: UploadFile = File(...)
+):
+    """Upload an audio file and send it as a WhatsApp audio message."""
+    temp_file_path = None
+    try:
+        # Validate file type
+        if not file.content_type or not file.content_type.startswith('audio/'):
+            raise HTTPException(status_code=400, detail="File must be an audio file")
+        
+        # Create temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file.filename.split('.')[-1]}") as temp_file:
+            temp_file_path = temp_file.name
+            
+            # Copy uploaded file to temporary location
+            shutil.copyfileobj(file.file, temp_file)
+        
+        # Send the audio message
+        success, status_message = whatsapp_audio_voice_message(recipient, temp_file_path)
+        
+        await broadcast_event("audio_uploaded_and_sent", {
+            "recipient": recipient,
+            "filename": file.filename,
+            "content_type": file.content_type,
+            "success": success,
+            "message": status_message
+        })
+        
+        return {
+            "success": success, 
+            "message": status_message,
+            "filename": file.filename,
+            "content_type": file.content_type
+        }
+        
+    except Exception as e:
+        logger.error(f"Error uploading and sending audio: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        # Clean up temporary file
+        if temp_file_path and os.path.exists(temp_file_path):
+            try:
+                os.unlink(temp_file_path)
+            except Exception as e:
+                logger.warning(f"Failed to delete temporary file {temp_file_path}: {e}")
+
+@app.post("/api/files/upload")
+async def upload_and_send_file(
+    recipient: str = Form(...),
+    file: UploadFile = File(...)
+):
+    """Upload a file and send it via WhatsApp."""
+    temp_file_path = None
+    try:
+        # Create temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file.filename.split('.')[-1]}") as temp_file:
+            temp_file_path = temp_file.name
+            
+            # Copy uploaded file to temporary location
+            shutil.copyfileobj(file.file, temp_file)
+        
+        # Send the file
+        success, status_message = whatsapp_send_file(recipient, temp_file_path)
+        
+        await broadcast_event("file_uploaded_and_sent", {
+            "recipient": recipient,
+            "filename": file.filename,
+            "content_type": file.content_type,
+            "success": success,
+            "message": status_message
+        })
+        
+        return {
+            "success": success, 
+            "message": status_message,
+            "filename": file.filename,
+            "content_type": file.content_type
+        }
+        
+    except Exception as e:
+        logger.error(f"Error uploading and sending file: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        # Clean up temporary file
+        if temp_file_path and os.path.exists(temp_file_path):
+            try:
+                os.unlink(temp_file_path)
+            except Exception as e:
+                logger.warning(f"Failed to delete temporary file {temp_file_path}: {e}")
 
 @app.post("/api/media/download")
 async def download_media_api(message_id: str, chat_jid: str):
