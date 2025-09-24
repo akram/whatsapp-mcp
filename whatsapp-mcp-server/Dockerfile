@@ -13,10 +13,10 @@ RUN pip install uv
 # Set working directory
 WORKDIR /app
 
-# Copy dependency files
+# Copy dependency files first for better caching
 COPY pyproject.toml uv.lock ./
 
-# Install dependencies
+# Install dependencies (this layer will be cached if dependencies don't change)
 RUN uv sync --frozen
 
 # Final stage
@@ -39,7 +39,7 @@ WORKDIR /app
 # Copy virtual environment from builder
 COPY --from=builder /app/.venv /app/.venv
 
-# Copy application code
+# Copy application code (this layer will be rebuilt when code changes)
 COPY . .
 
 # Set permissions
@@ -48,8 +48,11 @@ RUN chown -R appuser:appgroup /app
 # Switch to non-root user
 USER appuser
 
-# Activate virtual environment
+# Activate virtual environment and ensure python-multipart is available
 ENV PATH="/app/.venv/bin:$PATH"
+
+# Verify python-multipart is installed
+RUN python -c "import multipart; print('python-multipart is available')"
 
 # Expose port (MCP typically uses stdio, but we'll expose for health checks)
 EXPOSE 3000
