@@ -103,6 +103,20 @@ def list_messages(
         context_after=context_after
     )
     
+    # Handle case where whatsapp_list_messages returns a string
+    if isinstance(messages, str):
+        # If it's a string, return it as a single message entry
+        return [{
+            "id": "formatted_output",
+            "chat_jid": chat_jid or "unknown",
+            "sender": sender_phone_number or "unknown",
+            "content": messages,
+            "timestamp": None,
+            "is_from_me": False,
+            "chat_name": "Formatted Output",
+            "media_type": None
+        }]
+    
     # Convert Message objects to dictionaries for proper serialization
     result = []
     for message in messages:
