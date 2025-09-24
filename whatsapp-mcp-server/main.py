@@ -103,9 +103,22 @@ async def generate_llamastack_response(content: str, media_type: str, sender: st
         context = build_ai_context(content, media_type, sender, chat_name, recent_messages)
         
         # Use LlamaStack agent to generate response with tool access
-        response = agent.run(context)
+        response = agent.create_turn(
+            messages=[{"role": "user", "content": context}],
+            session_id=agent.session_id,
+            stream=False,
+        )
         
-        return response
+        # Extract the response content
+        if hasattr(response, 'messages') and response.messages:
+            # Get the last message from the agent
+            last_message = response.messages[-1]
+            if hasattr(last_message, 'content'):
+                return last_message.content
+            elif hasattr(last_message, 'text'):
+                return last_message.text
+        
+        return "I received your message but couldn't generate a proper response."
         
     except Exception as e:
         logger.error(f"Error generating LlamaStack response: {e}")
