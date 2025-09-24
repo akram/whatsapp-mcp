@@ -10,4 +10,5 @@ dependencies = [
     "uvicorn",
     "sse-starlette",
     "python-multipart",
+    "llamastack",
 ]
