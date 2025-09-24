@@ -468,6 +468,7 @@ async def upload_and_send_audio(
             
             # Copy uploaded file to temporary location
             shutil.copyfileobj(file.file, temp_file)
+            temp_file.flush()  # Ensure data is written to disk
         
         # Send the audio message
         success, status_message = whatsapp_audio_voice_message(recipient, temp_file_path)
