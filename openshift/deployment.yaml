@@ -6,6 +6,11 @@ metadata:
     app: whatsapp-mcp
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
   selector:
     matchLabels:
       app: whatsapp-mcp
@@ -78,6 +83,8 @@ spec:
           mountPath: /app/store
         - name: config
           mountPath: /app/config
+        - name: uploads
+          mountPath: /app/uploads
         resources:
           requests:
             memory: "128Mi"
@@ -113,6 +120,8 @@ spec:
       - name: config
         configMap:
           name: whatsapp-mcp-config
+      - name: uploads
+        emptyDir: {}
       
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
