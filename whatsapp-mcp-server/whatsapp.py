@@ -3,6 +3,8 @@ from datetime import datetime
 from dataclasses import dataclass
 from typing import Optional, List, Tuple
 import os.path
+import os
+import time
 import requests
 import json
 import audio
@@ -700,7 +702,15 @@ def send_audio_message(recipient: str, media_path: str) -> Tuple[bool, str]:
 
         if not media_path.endswith(".ogg"):
             try:
-                media_path = audio.convert_to_opus_ogg_temp(media_path)
+                # Convert to opus ogg format, but use a persistent file in uploads directory
+                uploads_dir = "/app/uploads"
+                timestamp = int(time.time())
+                converted_filename = f"{timestamp}_converted_{os.path.basename(media_path)}.ogg"
+                converted_path = os.path.join(uploads_dir, converted_filename)
+                
+                # Convert the file to opus ogg format
+                audio.convert_to_opus_ogg(media_path, converted_path)
+                media_path = converted_path
             except Exception as e:
                 return False, f"Error converting file to opus ogg. You likely need to install ffmpeg: {str(e)}"
         
