@@ -103,22 +103,36 @@ async def generate_llamastack_response(content: str, media_type: str, sender: st
         context = build_ai_context(content, media_type, sender, chat_name, recent_messages)
         
         # Use LlamaStack agent to generate response with tool access
-        response = agent.create_turn(
-            messages=[{"role": "user", "content": context}],
-            session_id=agent.session_id,
-            stream=False,
-        )
+        logger.info(f"🤖 Generating AI response for message: {content[:50]}...")
         
-        # Extract the response content
-        if hasattr(response, 'messages') and response.messages:
-            # Get the last message from the agent
-            last_message = response.messages[-1]
-            if hasattr(last_message, 'content'):
-                return last_message.content
-            elif hasattr(last_message, 'text'):
-                return last_message.text
-        
-        return "I received your message but couldn't generate a proper response."
+        try:
+            response = agent.create_turn(
+                messages=[{"role": "user", "content": context}],
+                session_id=agent.session_id,
+                stream=False,
+            )
+            
+            logger.info("✅ LlamaStack turn completed successfully")
+            
+            # Extract the response content
+            if hasattr(response, 'messages') and response.messages:
+                # Get the last message from the agent
+                last_message = response.messages[-1]
+                if hasattr(last_message, 'content'):
+                    response_text = last_message.content
+                    logger.info(f"📝 Extracted response content: {response_text[:100]}...")
+                    return response_text
+                elif hasattr(last_message, 'text'):
+                    response_text = last_message.text
+                    logger.info(f"📝 Extracted response text: {response_text[:100]}...")
+                    return response_text
+            
+            logger.warning("⚠️ No valid response content found in LlamaStack response")
+            return "I received your message but couldn't generate a proper response."
+            
+        except Exception as turn_error:
+            logger.error(f"❌ Error during LlamaStack turn: {turn_error}")
+            return f"Sorry, I encountered an error while processing your message: {str(turn_error)}"
         
     except Exception as e:
         logger.error(f"Error generating LlamaStack response: {e}")
@@ -205,7 +219,11 @@ async def create_llamastack_client():
         
         # Create client with LlamaStack base URL only
         # LlamaStack client connects to the LlamaStack service (llamastack_base_url)
-        client = LlamaStackClient(base_url=llamastack_base_url)
+        # Add timeout configuration to prevent connection issues
+        client = LlamaStackClient(
+            base_url=llamastack_base_url,
+            timeout=60.0  # 60 second timeout
+        )
         
         logger.info("✅ LlamaStack client created successfully")
         logger.info(f"🔗 Connected to LlamaStack service at: {llamastack_base_url}")
@@ -887,6 +905,10 @@ if __name__ == "__main__":
         print(f"     - Tools: http://{host}:{port}/tools")
         print(f"     - MCP: http://{host}:{port}/mcp")
         print(f"   This provides both MCP protocol and HTTP API endpoints")
+    
+    # Register the built-in auto-reply handler
+    add_message_handler(built_in_auto_reply)
+    logger.info("🤖 Built-in auto-reply handler registered")
     
     # Initialize and run the MCP server
     mcp.settings.host = host
