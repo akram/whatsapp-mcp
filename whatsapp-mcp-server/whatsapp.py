@@ -702,11 +702,12 @@ def send_audio_message(recipient: str, media_path: str) -> Tuple[bool, str]:
 
         if not media_path.endswith(".ogg"):
             try:
-                # Convert to opus ogg format, but use a persistent file in uploads directory
-                uploads_dir = "/app/uploads"
+                # Convert to opus ogg format, use the same directory as the original file
+                file_dir = os.path.dirname(media_path)
+                file_name = os.path.splitext(os.path.basename(media_path))[0]
                 timestamp = int(time.time())
-                converted_filename = f"{timestamp}_converted_{os.path.basename(media_path)}.ogg"
-                converted_path = os.path.join(uploads_dir, converted_filename)
+                converted_filename = f"{timestamp}_converted_{file_name}.ogg"
+                converted_path = os.path.join(file_dir, converted_filename)
                 
                 # Convert the file to opus ogg format
                 audio.convert_to_opus_ogg(media_path, converted_path)
