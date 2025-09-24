@@ -467,6 +467,11 @@ func handleMessage(client *whatsmeow.Client, messageStore *MessageStore, msg *ev
 		} else if content != "" {
 			fmt.Printf("[%s] %s %s: %s\n", timestamp, direction, sender, content)
 		}
+
+		// Notify MCP server about new message (only for incoming messages)
+		if !msg.Info.IsFromMe {
+			go notifyMCPAboutNewMessage(msg.Info.ID, chatJID, sender, content, msg.Info.Timestamp, mediaType, filename, name)
+		}
 	}
 }
 
@@ -1345,4 +1350,59 @@ func placeholderWaveform(duration uint32) []byte {
 	}
 
 	return waveform
+}
+
+// MessageNotification represents a notification sent to the MCP server
+type MessageNotification struct {
+	Type      string    `json:"type"`
+	MessageID string    `json:"message_id"`
+	ChatJID   string    `json:"chat_jid"`
+	Sender    string    `json:"sender"`
+	Content   string    `json:"content"`
+	Timestamp time.Time `json:"timestamp"`
+	MediaType string    `json:"media_type"`
+	Filename  string    `json:"filename"`
+	ChatName  string    `json:"chat_name"`
+}
+
+// notifyMCPAboutNewMessage sends a notification to the MCP server about a new incoming message
+func notifyMCPAboutNewMessage(messageID, chatJID, sender, content string, timestamp time.Time, mediaType, filename, chatName string) {
+	// Get MCP server URL from environment variable or use default
+	mcpServerURL := os.Getenv("MCP_SERVER_URL")
+	if mcpServerURL == "" {
+		mcpServerURL = "http://localhost:3000"
+	}
+
+	notification := MessageNotification{
+		Type:      "new_message",
+		MessageID: messageID,
+		ChatJID:   chatJID,
+		Sender:    sender,
+		Content:   content,
+		Timestamp: timestamp,
+		MediaType: mediaType,
+		Filename:  filename,
+		ChatName:  chatName,
+	}
+
+	// Convert to JSON
+	jsonData, err := json.Marshal(notification)
+	if err != nil {
+		fmt.Printf("Error marshaling notification: %v\n", err)
+		return
+	}
+
+	// Send HTTP POST request to MCP server
+	resp, err := http.Post(mcpServerURL+"/api/message-notification", "application/json", strings.NewReader(string(jsonData)))
+	if err != nil {
+		fmt.Printf("Error sending notification to MCP server: %v\n", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		fmt.Printf("MCP server returned status %d for notification\n", resp.StatusCode)
+	} else {
+		fmt.Printf("✅ Notified MCP server about new message from %s\n", sender)
+	}
 }

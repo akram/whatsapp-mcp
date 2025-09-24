@@ -1,6 +1,10 @@
 from typing import List, Dict, Any, Optional
 from mcp.server.fastmcp import FastMCP
 from starlette.responses import PlainTextResponse, JSONResponse
+from starlette.requests import Request
+import asyncio
+import json
+import logging
 from whatsapp import (
     search_contacts as whatsapp_search_contacts,
     list_messages as whatsapp_list_messages,
@@ -16,8 +20,39 @@ from whatsapp import (
     download_media as whatsapp_download_media
 )
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Store for message notification handlers
+message_handlers = []
+
 # Initialize FastMCP server
 mcp = FastMCP("whatsapp")
+
+def add_message_handler(handler):
+    """Add a message handler function that will be called when new messages arrive."""
+    message_handlers.append(handler)
+    logger.info(f"Added message handler. Total handlers: {len(message_handlers)}")
+
+def remove_message_handler(handler):
+    """Remove a message handler."""
+    if handler in message_handlers:
+        message_handlers.remove(handler)
+        logger.info(f"Removed message handler. Total handlers: {len(message_handlers)}")
+
+async def notify_message_handlers(message_data: Dict[str, Any]):
+    """Notify all registered message handlers about a new message."""
+    logger.info(f"Notifying {len(message_handlers)} handlers about new message from {message_data.get('sender', 'unknown')}")
+    
+    for handler in message_handlers:
+        try:
+            if asyncio.iscoroutinefunction(handler):
+                await handler(message_data)
+            else:
+                handler(message_data)
+        except Exception as e:
+            logger.error(f"Error in message handler: {e}")
 
 @mcp.tool(
     name="search_contacts",
@@ -576,6 +611,30 @@ async def list_tools(request):
     
     return JSONResponse({"tools": tools})
 
+@mcp.custom_route("/api/message-notification", methods=["POST"])
+async def message_notification(request: Request):
+    """Endpoint to receive message notifications from WhatsApp bridge."""
+    try:
+        # Parse the notification data
+        notification_data = await request.json()
+        
+        logger.info(f"Received message notification: {notification_data.get('type', 'unknown')} from {notification_data.get('sender', 'unknown')}")
+        
+        # Notify all registered handlers
+        await notify_message_handlers(notification_data)
+        
+        return JSONResponse({
+            "success": True,
+            "message": "Notification processed successfully"
+        })
+        
+    except Exception as e:
+        logger.error(f"Error processing message notification: {e}")
+        return JSONResponse({
+            "success": False,
+            "message": f"Error processing notification: {str(e)}"
+        }, status_code=500)
+
 @mcp.custom_route("/", methods=["GET"])
 async def root_info(request):
     """Root endpoint with API information."""
@@ -586,7 +645,8 @@ async def root_info(request):
         "endpoints": {
             "mcp_sse": "/sse",
             "health": "/health",
-            "tools": "/tools"
+            "tools": "/tools",
+            "message_notification": "/api/message-notification"
         }
     })
 
