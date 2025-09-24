@@ -187,7 +187,8 @@ async def create_llamastack_client():
         from llamastack import LlamaStackClient
         
         # Get LlamaStack configuration from environment variables
-        llamastack_url = os.getenv("LLAMASTACK_URL", "http://localhost:3000/sse")
+        # Default URLs from your notebooks (Teti love message setup)
+        llamastack_url = os.getenv("LLAMASTACK_URL", "https://whatsapp-mcp-route-whatsapp-mcp.apps.rosa.akram.a1ey.p3.openshiftapps.com/sse")
         llamastack_model = os.getenv("LLAMASTACK_MODEL", "claude-3-5-sonnet-20241022")
         llamastack_temperature = float(os.getenv("LLAMASTACK_TEMPERATURE", "0.7"))
         llamastack_max_tokens = int(os.getenv("LLAMASTACK_MAX_TOKENS", "200"))

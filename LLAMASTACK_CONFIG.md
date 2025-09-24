@@ -7,8 +7,8 @@ Configure the LlamaStack auto-reply system using these environment variables:
 ### Required Configuration
 
 ```bash
-# LlamaStack service URL (where LlamaStack is running)
-export LLAMASTACK_URL="http://localhost:3000/sse"
+# LlamaStack service URL (default: OpenShift deployment from Teti notebook)
+export LLAMASTACK_URL="https://whatsapp-mcp-route-whatsapp-mcp.apps.rosa.akram.a1ey.p3.openshiftapps.com/sse"
 
 # AI model to use for responses
 export LLAMASTACK_MODEL="claude-3-5-sonnet-20241022"
@@ -35,11 +35,10 @@ export MESSAGES_DB_PATH="/path/to/messages.db"
 
 ## Usage Examples
 
-### Basic Setup
+### Basic Setup (Using Default OpenShift Deployment)
 ```bash
-# Set environment variables
-export LLAMASTACK_URL="http://localhost:3000/sse"
-export LLAMASTACK_MODEL="claude-3-5-sonnet-20241022"
+# Default configuration uses OpenShift deployment from Teti notebook
+# No environment variables needed - uses defaults
 
 # Start MCP server
 cd whatsapp-mcp-server

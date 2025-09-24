@@ -43,7 +43,7 @@ def main():
     print("=" * 50)
     
     # Check current configuration
-    current_url = os.getenv("LLAMASTACK_URL", "http://localhost:3000/sse")
+    current_url = os.getenv("LLAMASTACK_URL", "https://whatsapp-mcp-route-whatsapp-mcp.apps.rosa.akram.a1ey.p3.openshiftapps.com/sse")
     print(f"Current LLAMASTACK_URL: {current_url}")
     
     # Test MCP server
@@ -59,9 +59,9 @@ def main():
     # Provide configuration options
     print("\n📋 Configuration Options:")
     print("")
-    print("1. **Default Configuration (Self-referencing - NOT RECOMMENDED)**")
-    print("   export LLAMASTACK_URL='http://localhost:3000/sse'")
-    print("   # This points to the MCP server itself - may cause issues")
+    print("1. **Default Configuration (OpenShift Deployment - RECOMMENDED)**")
+    print("   export LLAMASTACK_URL='https://whatsapp-mcp-route-whatsapp-mcp.apps.rosa.akram.a1ey.p3.openshiftapps.com/sse'")
+    print("   # Uses the OpenShift deployment from your Teti notebook")
     print("")
     print("2. **External LlamaStack Service**")
     print("   export LLAMASTACK_URL='http://llamastack.example.com:8080/sse'")
