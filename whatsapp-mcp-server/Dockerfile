@@ -51,8 +51,8 @@ USER appuser
 # Activate virtual environment and ensure python-multipart is available
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Verify python-multipart is installed
-RUN python -c "import multipart; print('python-multipart is available')"
+# Ensure python-multipart is installed (fallback if not in uv.lock)
+RUN python -c "import multipart; print('python-multipart is available')" 2>/dev/null || (echo "Installing python-multipart manually" && pip install python-multipart && python -c "import multipart; print('python-multipart installed successfully')")
 
 # Expose port (MCP typically uses stdio, but we'll expose for health checks)
 EXPOSE 3000
