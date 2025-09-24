@@ -180,51 +180,11 @@ def build_ai_context(content: str, media_type: str, sender: str, chat_name: str,
     
     return "\n".join(context_parts)
 
-class MockLlamaStackClient:
-    """Mock LlamaStack client for when the real package is not available."""
-    
-    def __init__(self, base_url=None, model=None, temperature=None, max_tokens=None):
-        self.base_url = base_url
-        self.model = model
-        self.temperature = temperature
-        self.max_tokens = max_tokens
-        logger.info("🤖 Using MockLlamaStackClient (LlamaStack package not available)")
-    
-    async def initialize(self):
-        """Mock initialize method."""
-        logger.info("✅ Mock LlamaStack client initialized")
-        return True
-    
-    async def generate_response_with_tools(self, context, available_tools=None):
-        """Generate a mock response."""
-        logger.info("🤖 Generating mock AI response...")
-        
-        # Simple mock responses based on context
-        if "hello" in context.lower() or "hi" in context.lower():
-            return "Hello! How can I help you today?"
-        elif "how are you" in context.lower():
-            return "I'm doing well, thank you for asking! How are you?"
-        elif "thank" in context.lower():
-            return "You're welcome! Is there anything else I can help you with?"
-        elif "bye" in context.lower() or "goodbye" in context.lower():
-            return "Goodbye! Have a great day!"
-        else:
-            return "Thank you for your message! I'm here to help if you need anything."
-    
-    async def close(self):
-        """Mock close method."""
-        logger.info("✅ Mock LlamaStack client closed")
-        return True
 
 async def create_llamastack_client():
     """Create a LlamaStack MCP client for this session."""
     try:
-        # Try to import LlamaStack client
-        try:
-            from llama_stack_client import LlamaStackClient
-        except ImportError:
-            logger.warning("⚠️ LlamaStack package not found. Using mock implementation.")
-            return MockLlamaStackClient()
+        from llama_stack_client import LlamaStackClient
         
         # Get LlamaStack configuration from environment variables
         # LLAMASTACK_BASE_URL: The LlamaStack service URL (external)
@@ -255,10 +215,12 @@ async def create_llamastack_client():
         logger.info("✅ LlamaStack client created and initialized")
         return client
         
+    except ImportError:
+        logger.error("❌ LlamaStack not installed. Install with: pip install llama-stack")
+        return None
     except Exception as e:
         logger.error(f"❌ Failed to create LlamaStack client: {e}")
-        logger.warning("⚠️ Falling back to mock implementation.")
-        return MockLlamaStackClient()
+        return None
 
 @mcp.tool(
     name="search_contacts",
