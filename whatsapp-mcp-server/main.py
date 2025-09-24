@@ -221,7 +221,7 @@ async def create_llamastack_client():
     try:
         # Try to import LlamaStack client
         try:
-            from llamastack import LlamaStackClient
+            from llama_stack_client import LlamaStackClient
         except ImportError:
             logger.warning("⚠️ LlamaStack package not found. Using mock implementation.")
             return MockLlamaStackClient()
