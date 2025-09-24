@@ -59,10 +59,10 @@ async def notify_message_handlers(message_data: Dict[str, Any]):
             logger.error(f"Error in message handler: {e}")
 
 async def built_in_auto_reply(message_data: Dict[str, Any]):
-    """Built-in auto-reply handler."""
+    """Built-in auto-reply handler using LlamaStack."""
     try:
         sender = message_data.get('sender', 'unknown')
-        content = message_data.get('content', '').lower().strip()
+        content = message_data.get('content', '').strip()
         chat_jid = message_data.get('chat_jid', 'unknown')
         media_type = message_data.get('media_type', '')
         chat_name = message_data.get('chat_name', 'unknown')
@@ -71,32 +71,8 @@ async def built_in_auto_reply(message_data: Dict[str, Any]):
         if not content and not media_type:
             return
         
-        # Determine response
-        response = None
-        
-        # Handle media messages
-        if media_type:
-            response = f"Thanks for the {media_type}! I received your message."
-        
-        # Handle text messages
-        elif content:
-            if any(word in content for word in ['hello', 'hi', 'hey']):
-                response = "Hello! How can I help you today?"
-            elif any(word in content for word in ['how are you', 'how are you?']):
-                response = "I'm doing great, thank you! How about you?"
-            elif 'help' in content:
-                response = "I'm here to help! What do you need assistance with?"
-            elif 'time' in content:
-                response = f"The current time is {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-            elif 'thank' in content:
-                response = "You're welcome! Is there anything else I can help with?"
-            elif content.endswith('?'):
-                response = "That's a great question! I'm here to help you find the answer."
-            elif any(word in content for word in ['fine', 'good', 'ok', 'okay']):
-                response = "That's great to hear! Is there anything I can help you with?"
-            else:
-                # Default response for other messages
-                response = "Thanks for your message! I'm here to help."
+        # Generate intelligent response using LlamaStack
+        response = await generate_llamastack_response(content, media_type, sender, chat_name, chat_jid)
         
         # Send reply if we have one
         if response:
@@ -108,6 +84,127 @@ async def built_in_auto_reply(message_data: Dict[str, Any]):
         
     except Exception as e:
         logger.error(f"Error in built-in auto-reply: {e}")
+
+async def generate_llamastack_response(content: str, media_type: str, sender: str, chat_name: str, chat_jid: str) -> str:
+    """Generate intelligent response using LlamaStack MCP client with tool access."""
+    try:
+        # Create LlamaStack client for this session
+        client = await create_llamastack_client()
+        
+        if not client:
+            logger.error("Failed to create LlamaStack client")
+            return None
+        
+        # Get recent conversation context using MCP tools
+        recent_messages = await get_recent_conversation_context(chat_jid, limit=5)
+        
+        # Prepare context for the AI
+        context = build_ai_context(content, media_type, sender, chat_name, recent_messages)
+        
+        # Use LlamaStack to generate response with tool access
+        response = await client.generate_response_with_tools(context, available_tools=[
+            "search_contacts",
+            "list_messages", 
+            "list_chats",
+            "get_chat",
+            "send_message"
+        ])
+        
+        # Clean up client
+        await client.close()
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error generating LlamaStack response: {e}")
+        return None
+
+async def get_recent_conversation_context(chat_jid: str, limit: int = 5) -> list:
+    """Get recent messages from the conversation for context."""
+    try:
+        # Use the MCP server's list_messages tool
+        messages = whatsapp_list_messages(
+            chat_jid=chat_jid,
+            limit=limit,
+            include_context=False
+        )
+        
+        # Convert to simple format for AI context
+        context_messages = []
+        for msg in messages:
+            if hasattr(msg, 'content'):
+                context_messages.append({
+                    'sender': msg.sender if hasattr(msg, 'sender') else 'unknown',
+                    'content': msg.content,
+                    'is_from_me': msg.is_from_me if hasattr(msg, 'is_from_me') else False,
+                    'timestamp': msg.timestamp.isoformat() if hasattr(msg, 'timestamp') and msg.timestamp else None
+                })
+        
+        return context_messages
+        
+    except Exception as e:
+        logger.error(f"Error getting conversation context: {e}")
+        return []
+
+def build_ai_context(content: str, media_type: str, sender: str, chat_name: str, recent_messages: list) -> str:
+    """Build context string for the AI."""
+    context_parts = [
+        f"You are a helpful WhatsApp assistant responding to a message from {chat_name} ({sender}).",
+        "",
+        "RECENT CONVERSATION CONTEXT:",
+    ]
+    
+    # Add recent messages for context
+    for msg in recent_messages[-3:]:  # Last 3 messages
+        direction = "You" if msg.get('is_from_me', False) else chat_name
+        msg_content = msg.get('content', '')
+        context_parts.append(f"{direction}: {msg_content}")
+    
+    context_parts.extend([
+        "",
+        f"CURRENT MESSAGE:",
+        f"Content: {content}",
+        f"Media type: {media_type if media_type else 'text'}",
+        "",
+        "INSTRUCTIONS:",
+        "- Generate a helpful, natural response",
+        "- Keep it conversational and concise (under 200 characters)",
+        "- If it's a greeting, respond warmly",
+        "- If it's a question, try to help or ask for clarification", 
+        "- If it's media, acknowledge it appropriately",
+        "- Use the conversation context to make responses more relevant",
+        "- Be friendly but professional",
+        "- You have access to WhatsApp tools if needed (search_contacts, list_messages, etc.)"
+    ])
+    
+    return "\n".join(context_parts)
+
+async def create_llamastack_client():
+    """Create a LlamaStack MCP client for this session."""
+    try:
+        # Import LlamaStack client
+        from llamastack import LlamaStackClient
+        
+        # Create client with MCP server configuration
+        client = LlamaStackClient(
+            mcp_server_url="http://localhost:3000/sse",
+            model="claude-3-5-sonnet-20241022",  # or your preferred model
+            temperature=0.7,
+            max_tokens=200
+        )
+        
+        # Initialize the client
+        await client.initialize()
+        
+        logger.info("✅ LlamaStack client created and initialized")
+        return client
+        
+    except ImportError:
+        logger.error("❌ LlamaStack not installed. Install with: pip install llamastack")
+        return None
+    except Exception as e:
+        logger.error(f"❌ Failed to create LlamaStack client: {e}")
+        return None
 
 @mcp.tool(
     name="search_contacts",

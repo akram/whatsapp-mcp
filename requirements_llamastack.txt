@@ -1,0 +1,9 @@
+# LlamaStack Auto-Reply Requirements
+# Install with: pip install llamastack
+
+llamastack>=0.1.0
+asyncio
+typing
+datetime
+logging
+json
