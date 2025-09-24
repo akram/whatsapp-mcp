@@ -39,6 +39,8 @@ spec:
           mountPath: /app/store
         - name: config
           mountPath: /app/config
+        - name: uploads
+          mountPath: /app/uploads
         resources:
           requests:
             memory: "256Mi"
